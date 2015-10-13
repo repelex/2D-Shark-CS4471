@@ -50,7 +50,7 @@ window.onload = function init()
 	cb_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cl_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cr_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
-	player_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
+	player_prog = initShaders( gl, "player-vs", "player-fs" );
 	shark_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	
 	// top
