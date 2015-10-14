@@ -29,6 +29,9 @@ var player_Buffer;
 var shark_Buffer;
 var cBuffer;
 var vColor;
+var turnLeft = false;
+var turnRight = false;
+var sTheta;
 
 window.onload = function init()
 {
@@ -142,16 +145,19 @@ function handleKeyDown(event) {
  
     if (event.keyCode == 37) {
         //Left Arrow Key
-        ptheta += 0.1;
+        sTheta = ptheta;
+        turnLeft = true;
     } else if (event.keyCode == 38) {
         //Up Arrow Key
     } else if (event.keyCode == 39) {
         //Right Arrow Key
-        ptheta -= 0.1;
+        sTheta = ptheta;
+        turnRight = true;
     } else if (event.keyCode == 40) {
         //Down Arrow Key
     } else if (event.keyCode == 32) {
         //Spacebar
+        alert(ptheta)
     }
 }
 
@@ -183,6 +189,7 @@ function render() {
 	gl.vertexAttribPointer( cl_vPosition, 2, gl.FLOAT, false, 0, 0 );
 	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
 	
+	rotatePlayer();
 	gl.useProgram( player_prog );
 	gl.enableVertexAttribArray( player_vPosition );
 	gl.bindBuffer( gl.ARRAY_BUFFER, player_Buffer );
@@ -202,4 +209,19 @@ function render() {
 	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
 	
     window.requestAnimFrame(render);
+}
+
+function rotatePlayer(){
+	if (turnLeft){
+		if (ptheta - sTheta < Math.PI/2)
+			ptheta += Math.PI/10
+		else
+			turnLeft = false;
+	}
+	if (turnRight){
+		if (-1*(ptheta - sTheta) < Math.PI/2)
+			ptheta -= Math.PI/10
+		else
+			turnRight = false;
+	}
 }
