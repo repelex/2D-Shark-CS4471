@@ -2,6 +2,7 @@ var canvas;
 var gl;
 
 var theta = 0.0;
+var ptheta = 0.0;
 var thetaLoc1;
 var thetaLoc2;
 
@@ -49,7 +50,7 @@ window.onload = function init()
 	cb_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cl_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cr_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
-	player_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
+	player_prog = initShaders( gl, "player-vs", "player-fs" );
 	shark_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	
 	// top
@@ -137,14 +138,16 @@ window.onload = function init()
 
 function handleKeyDown(event) {
     //You can uncomment the next line to find out each key's code
-    alert(event.keyCode);
+    //alert(event.keyCode);
  
     if (event.keyCode == 37) {
         //Left Arrow Key
+        ptheta += 0.1;
     } else if (event.keyCode == 38) {
         //Up Arrow Key
     } else if (event.keyCode == 39) {
         //Right Arrow Key
+        ptheta -= 0.1;
     } else if (event.keyCode == 40) {
         //Down Arrow Key
     } else if (event.keyCode == 32) {
@@ -186,7 +189,8 @@ function render() {
 	gl.vertexAttribPointer( player_vPosition, 2, gl.FLOAT, false, 0, 0 );
 	
 	theta += 0.1;
-    gl.uniform1f( thetaLoc1, theta );
+	
+    gl.uniform1f( thetaLoc1, ptheta );
 	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 3 );
 	
 	gl.useProgram( shark_prog );
