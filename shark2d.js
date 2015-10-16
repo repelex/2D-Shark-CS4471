@@ -3,6 +3,13 @@ var gl;
 
 var theta = 0.0;
 var ptheta = 0.0;
+
+var sharkx = 0.0; 
+var sharky = 0.0;
+var sharkxSpd = 0.0;
+var sharkySpd = 0.0;
+var sharkSide = 0;
+
 var thetaLoc1;
 var thetaLoc2;
 
@@ -32,6 +39,7 @@ var vColor;
 var turnLeft = false;
 var turnRight = false;
 var sTheta;
+
 
 window.onload = function init()
 {
@@ -126,6 +134,8 @@ window.onload = function init()
 	gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
 	gl.bufferData( gl.ARRAY_BUFFER, flatten(shark), gl.STATIC_DRAW );
 	shark_vPosition = gl.getAttribLocation( shark_prog, "vPosition" );
+	sharkxLoc = gl.getUniformLocation( shark_prog, "xPos" );
+	sharkyLoc = gl.getUniformLocation( shark_prog, "yPos" );
 	thetaLoc2 = gl.getUniformLocation( shark_prog, "theta" );
 	
 	// Create a buffer object, initialize it, and associate it with the
@@ -149,15 +159,18 @@ function handleKeyDown(event) {
         turnLeft = true;
     } else if (event.keyCode == 38) {
         //Up Arrow Key
+        sharky+=0.05;
     } else if (event.keyCode == 39) {
         //Right Arrow Key
         sTheta = ptheta;
         turnRight = true;
     } else if (event.keyCode == 40) {
         //Down Arrow Key
+        sharkSide = randomInt(4);
+        sharkEnter();
     } else if (event.keyCode == 32) {
         //Spacebar
-        alert(ptheta)
+        theta+=Math.PI/2;
     }
 }
 
@@ -195,7 +208,7 @@ function render() {
 	gl.bindBuffer( gl.ARRAY_BUFFER, player_Buffer );
 	gl.vertexAttribPointer( player_vPosition, 2, gl.FLOAT, false, 0, 0 );
 	
-	theta += 0.1;
+	//theta += 0.1;
 	
     gl.uniform1f( thetaLoc1, ptheta );
 	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 3 );
@@ -204,7 +217,10 @@ function render() {
 	gl.enableVertexAttribArray( shark_vPosition );
 	gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
 	gl.vertexAttribPointer( shark_vPosition, 2, gl.FLOAT, false, 0, 0 );
-	
+	sharky += sharkySpd;
+	gl.uniform1f( sharkyLoc, sharky );
+	sharkx += sharkxSpd;
+	gl.uniform1f( sharkxLoc, sharkx );
     gl.uniform1f( thetaLoc2, theta );
 	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
 	
@@ -224,4 +240,36 @@ function rotatePlayer(){
 		else
 			turnRight = false;
 	}
+}
+
+function sharkEnter(){
+	if (sharkSide == 0){
+		sharky = 1;
+		sharkx = 0;
+		theta = Math.PI;
+		sharkySpd = -0.01;
+		sharkxSpd = 0;
+	} else if (sharkSide == 1){
+		sharky = 0;
+		sharkx = 1;
+		theta = Math.PI/2;
+		sharkySpd = 0;
+		sharkxSpd = -0.01;
+	} else if (sharkSide == 2){
+		sharky = -1;
+		sharkx = 0;
+		theta = 0;
+		sharkySpd = 0.01;
+		sharkxSpd = 0;
+	} else if (sharkSide == 3){
+		sharky = 0;
+		sharkx = -1;
+		theta = Math.PI*3/2;
+		sharkySpd = 0;
+		sharkxSpd = 0.01;
+	}
+}
+
+function randomInt(range) {
+  return Math.floor(Math.random() * range);
 }
