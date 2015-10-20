@@ -41,13 +41,13 @@ var sTheta;
 var sharkScare = 0;
 
 //total hits to kill shark
-var sharkHP = 18;
+var sharkHP = 30;
 
 //cage strength
-var c_topStr = 6;
-var c_bottomStr = 6;
-var c_leftStr = 6;
-var c_rightStr = 6;
+var c_topStr = 600;
+var c_bottomStr = 600;
+var c_leftStr = 600;
+var c_rightStr = 600;
 
 window.onload = function init()
 {
@@ -147,8 +147,7 @@ window.onload = function init()
 	sharkyLoc = gl.getUniformLocation( shark_prog, "yPos" );
 	thetaLoc2 = gl.getUniformLocation( shark_prog, "theta" );
 	
-	sharkSide = randomInt(4);
-    sharkEnter();
+	sharkEnter();
 	
     render();
 };
@@ -171,8 +170,7 @@ function handleKeyUp(event) {
     }
 	
 	//reset shark after being hit 3 times
-	if (sharkScare > 2 && sharkHP > 1){
-		sharkSide = randomInt(4);
+	if (sharkScare > 2 && sharkHP > 0){
 		sharkEnter();
 		sharkScare = 0;
 	}
@@ -190,7 +188,7 @@ function render() {
 	gl.clear( gl.COLOR_BUFFER_BIT);
 	
 	//draw top cage if still strong
-	if (c_topStr > 0){
+	if (c_rightStr > 0){
 		gl.useProgram( ct_prog );
 		gl.enableVertexAttribArray( ct_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, ct_Buffer );
@@ -199,7 +197,7 @@ function render() {
 	}
 	
 	//draw bottom cage if still strong
-	if (c_bottomStr > 0){
+	if (c_leftStr > 0){
 		gl.useProgram( cb_prog );
 		gl.enableVertexAttribArray( cb_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cb_Buffer );
@@ -208,7 +206,7 @@ function render() {
 	}
 	
 	//draw right cage if still strong
-	if (c_rightStr > 0){
+	if (c_topStr > 0){
 		gl.useProgram( cl_prog );
 		gl.enableVertexAttribArray( cr_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cr_Buffer );
@@ -217,7 +215,7 @@ function render() {
 	}
 	
 	//draw left cage if still strong
-	if (c_leftStr > 0){
+	if (c_bottomStr > 0){
 		gl.useProgram( cr_prog );
 		gl.enableVertexAttribArray( cl_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cl_Buffer );
@@ -235,27 +233,80 @@ function render() {
 	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 3 );
 	
 	//shark
-	gl.useProgram( shark_prog );
-	gl.enableVertexAttribArray( shark_vPosition );
-	gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
-	gl.vertexAttribPointer( shark_vPosition, 2, gl.FLOAT, false, 0, 0 );
-	//stop shark at cage
-	if (sharky > -0.01 && sharky < 0.01){
-		sharkySpd = 0;
-		//TODO: weaken appropriate cage side here 
-	} else {
-		sharky += sharkySpd;
+	if (sharkHP > 0){
+		gl.useProgram( shark_prog );
+		gl.enableVertexAttribArray( shark_vPosition );
+		gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
+		gl.vertexAttribPointer( shark_vPosition, 2, gl.FLOAT, false, 0, 0 );
+		
+		if(sharkSide==0 && c_topStr < 1){
+			//top broke
+			if (sharky < -0.5){
+				sharkySpd = 0;
+				alert("You lose!");
+			} else {
+				sharky += sharkySpd;
+			}
+		} else if(sharkSide==2 && c_bottomStr < 1){
+			//bottom broke
+			if (sharky > 0.5){
+				sharkySpd = 0;
+				alert("You lose!");
+			} else {
+				sharky += sharkySpd;
+			}
+		} else {
+			//weaken y value wall
+			if (sharky > -0.01 && sharky < 0.01){
+				sharkySpd = 0;
+				if (sharkSide==0){
+					//c_topStr -=1;
+				}
+				else{
+					//c_bottomStr -=1;
+				}
+			} else {
+				sharky += sharkySpd;
+			}
+		}
+		gl.uniform1f( sharkyLoc, sharky );
+		
+		if(sharkSide==1 && c_rightStr < 1){
+			//right broke
+			if (sharkx < -0.5){
+				sharkxSpd = 0;
+				alert("You lose!");
+			} else {
+				sharkx += sharkxSpd;
+			}
+		} else if(sharkSide==3 && c_leftStr < 1){
+			//left broke
+			if (sharkx > 0.5){
+				sharkxSpd = 0;
+				alert("You lose!");
+			} else {
+				sharkx += sharkxSpd;
+			}
+		} else {
+			//weaken x value wall
+			if (sharkx > -0.01 && sharkx < 0.01){
+				sharkxSpd = 0;
+				if (sharkSide==1){
+					//c_rightStr -=1;
+				}
+				else{
+					//c_leftStr -=1;
+				}
+			} else {
+				sharkx += sharkxSpd;
+			}
+		}
+		gl.uniform1f( sharkxLoc, sharkx );
+		
+		
+		gl.uniform1f( thetaLoc2, theta );
+		gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
 	}
-	gl.uniform1f( sharkyLoc, sharky );
-	if (sharkx > -0.01 && sharkx < 0.01){
-		sharkxSpd = 0;
-		//TODO: weaken appropriate cage side here
-	} else {
-		sharkx += sharkxSpd;
-	}
-	gl.uniform1f( sharkxLoc, sharkx );
-    gl.uniform1f( thetaLoc2, theta );
-	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
 	
     window.requestAnimFrame(render);
 }
@@ -276,6 +327,8 @@ function rotatePlayer(){
 }
 
 function sharkEnter(){
+	
+	sharkSide = randomInt(4);
 	
 	if (sharkSide == 0){
 		sharky = 1;
