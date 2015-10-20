@@ -13,9 +13,6 @@ var sharkSide = 0;
 var thetaLoc1;
 var thetaLoc2;
 
-
-var c_color = vec4( 0.0, 1.0, 0.0, 1.0 );
-
 var ct_prog;
 var cb_prog;
 var cl_prog;
@@ -40,6 +37,11 @@ var turnLeft = false;
 var turnRight = false;
 var sTheta;
 
+//scare shark from wall (every 3 hits)
+var sharkScare = 0;
+
+//total hits to kill shark
+var sharkKill = 16;
 
 window.onload = function init()
 {
@@ -52,7 +54,7 @@ window.onload = function init()
     //  Configure WebGL
     //
     gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
+    gl.clearColor( 0.0, 0.0, 1.0, 1.0 );
 	
 	document.onkeydown = handleKeyDown;
 	
@@ -62,7 +64,7 @@ window.onload = function init()
 	cl_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cr_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	player_prog = initShaders( gl, "player-vs", "player-fs" );
-	shark_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
+	shark_prog = initShaders( gl, "vertex-shader", "shark-fs" );
 	
 	// top
 	var cage_top = [
@@ -124,6 +126,7 @@ window.onload = function init()
 	player_vPosition = gl.getAttribLocation( player_prog, "vPosition" );
 	thetaLoc1 = gl.getUniformLocation( player_prog, "theta" );
 	
+	// shark
 	var shark = [
         vec2(  -0.25, 0.0 ),
         vec2(  -0.5, 0.1 ),
@@ -138,14 +141,9 @@ window.onload = function init()
 	sharkyLoc = gl.getUniformLocation( shark_prog, "yPos" );
 	thetaLoc2 = gl.getUniformLocation( shark_prog, "theta" );
 	
-	// Create a buffer object, initialize it, and associate it with the
-    //  associated attribute variable in our vertex shader
-	/* cBuffer = gl.createBuffer();
-	gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(c_color), gl.STATIC_DRAW );
-	vColor = gl.getAttribLocation( program, "vColor" );
-    gl.enableVertexAttribArray( vColor ); */
-
+	sharkSide = randomInt(4);
+    sharkEnter();
+	
     render();
 };
 
@@ -157,21 +155,55 @@ function handleKeyDown(event) {
         //Left Arrow Key
         sTheta = ptheta;
         turnLeft = true;
-    } else if (event.keyCode == 38) {
-        //Up Arrow Key
-        sharky+=0.05;
     } else if (event.keyCode == 39) {
         //Right Arrow Key
         sTheta = ptheta;
         turnRight = true;
-    } else if (event.keyCode == 40) {
-        //Down Arrow Key
-        sharkSide = randomInt(4);
-        sharkEnter();
     } else if (event.keyCode == 32) {
-        //Spacebar
-        theta+=Math.PI/2;
+		//Spacebar
+		if (ptheta > -1 && ptheta < 1){
+			//shoot right
+			if (sharkSide == 1){
+				//hit
+				sharkScare+=1;
+				sharkKill-=1;
+			}
+		} else if (ptheta > 1 && ptheta < 2){
+			//shoot up
+			if (sharkSide == 0){
+				//hit
+				sharkScare+=1;
+				sharkKill-=1;
+			}
+		} else if (ptheta > 3 && ptheta < 4){
+			//shoot left
+			if (sharkSide == 3){
+				//hit
+				sharkScare+=1;
+				sharkKill-=1;
+			}
+		} else if (ptheta > 4 && ptheta < 5){
+			//shoot down
+			if (sharkSide == 2){
+				//hit
+				sharkScare+=1;
+				sharkKill-=1;
+			}
+		}
     }
+	
+	//reset shark after being hit 3 times
+	if (sharkScare > 2 && sharkKill > 1){
+		sharkSide = randomInt(4);
+		sharkEnter();
+		sharkScare = 0;
+	}
+	
+	// shark dead
+	if (sharkKill < 1){
+		alert("Shark is dead. RIP.");
+	}
+	
 }
 
 function render() {
@@ -207,9 +239,6 @@ function render() {
 	gl.enableVertexAttribArray( player_vPosition );
 	gl.bindBuffer( gl.ARRAY_BUFFER, player_Buffer );
 	gl.vertexAttribPointer( player_vPosition, 2, gl.FLOAT, false, 0, 0 );
-	
-	//theta += 0.1;
-	
     gl.uniform1f( thetaLoc1, ptheta );
 	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 3 );
 	
@@ -217,10 +246,21 @@ function render() {
 	gl.enableVertexAttribArray( shark_vPosition );
 	gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
 	gl.vertexAttribPointer( shark_vPosition, 2, gl.FLOAT, false, 0, 0 );
-	sharky += sharkySpd;
+
+	if (sharky > -0.01 && sharky < 0.01){
+		sharkySpd = 0;
+	} else {
+		sharky += sharkySpd;
+	}
 	gl.uniform1f( sharkyLoc, sharky );
-	sharkx += sharkxSpd;
+
+	if (sharkx > -0.01 && sharkx < 0.01){
+		sharkxSpd = 0;
+	} else {
+		sharkx += sharkxSpd;
+	}
 	gl.uniform1f( sharkxLoc, sharkx );
+	
     gl.uniform1f( thetaLoc2, theta );
 	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
 	
@@ -243,6 +283,7 @@ function rotatePlayer(){
 }
 
 function sharkEnter(){
+	
 	if (sharkSide == 0){
 		sharky = 1;
 		sharkx = 0;
