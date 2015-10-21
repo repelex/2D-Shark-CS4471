@@ -24,21 +24,29 @@ var ct_vPosition;
 var ct_thetaLoc;
 var ct_xLoc;
 var ct_yLoc;
+var ct_colLoc;
+var ct_colMod = 0;
 
 var cb_vPosition;
 var cb_thetaLoc;
 var cb_xLoc;
 var cb_yLoc;
+var cb_colLoc;
+var cb_colMod = 0;
 
 var cl_vPosition;
 var cl_thetaLoc;
 var cl_xLoc;
 var cl_yLoc;
+var cl_colLoc;
+var cl_colMod = 0;
 
 var cr_vPosition;
 var cr_thetaLoc;
 var cr_xLoc;
 var cr_yLoc;
+var cr_colLoc;
+var cr_colMod = 0;
 
 var player_vPosition;
 var shark_vPosition;
@@ -65,6 +73,8 @@ var c_topStr = 600;
 var c_bottomStr = 600;
 var c_leftStr = 600;
 var c_rightStr = 600;
+
+var test = 0;
 
 window.onload = function init()
 {
@@ -103,6 +113,7 @@ window.onload = function init()
     ct_thetaLoc = gl.getUniformLocation(ct_prog, "theta");
     ct_xLoc = gl.getUniformLocation(ct_prog, "xPos");
     ct_yLoc = gl.getUniformLocation(ct_prog, "yPos");
+    ct_colLoc = gl.getUniformLocation(ct_prog, "u_colour");
 
 	// bottom
 	var cage_bottom = [
@@ -118,6 +129,7 @@ window.onload = function init()
     cb_thetaLoc = gl.getUniformLocation(cb_prog, "theta");
     cb_xLoc = gl.getUniformLocation(cb_prog, "xPos");
     cb_yLoc = gl.getUniformLocation(cb_prog, "yPos");
+    cb_colLoc = gl.getUniformLocation(cb_prog, "u_colour");
 
 	// left
 	var cage_left = [
@@ -133,6 +145,7 @@ window.onload = function init()
 	cl_thetaLoc = gl.getUniformLocation(cl_prog, "theta");
     cl_xLoc = gl.getUniformLocation(cl_prog, "xPos");
     cl_yLoc = gl.getUniformLocation(cl_prog, "yPos");
+    cl_colLoc = gl.getUniformLocation(cl_prog, "u_colour");
 	
 
 	// right
@@ -149,6 +162,7 @@ window.onload = function init()
     cr_thetaLoc = gl.getUniformLocation(cr_prog, "theta");
     cr_xLoc = gl.getUniformLocation(cr_prog, "xPos");
     cr_yLoc = gl.getUniformLocation(cr_prog, "yPos");
+    cr_colLoc = gl.getUniformLocation(cr_prog, "u_colour");
 	
 	// player
 	var player = [
@@ -226,8 +240,11 @@ function render() {
 		gl.uniform1f(ct_thetaLoc, (Math.PI/2));
 		gl.uniform1f(ct_xLoc, 0.25);
 		gl.uniform1f(ct_yLoc, -0.25);
+		gl.uniform4fv(ct_colLoc, vec4(ct_colMod,1.0-ct_colMod,0,1.0))
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
+
+	ct_colMod+=0.01;
 	
 	//draw bottom cage if still strong
 	if (c_bottomStr > 0){
@@ -238,6 +255,7 @@ function render() {
 		gl.uniform1f(cb_thetaLoc, (Math.PI/2));
 		gl.uniform1f(cb_xLoc, 0.25);
 		gl.uniform1f(cb_yLoc, 0.2);
+		gl.uniform4fv(cb_colLoc, vec4(cb_colMod,1.0-cb_colMod,0,1.0));
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
@@ -250,6 +268,7 @@ function render() {
 		gl.uniform1f(cr_thetaLoc, 0.0);
 		gl.uniform1f(cr_xLoc, 0.2);
 		gl.uniform1f(cr_yLoc, -0.25);
+		gl.uniform4fv(cr_colLoc, vec4(cr_colMod,1.0-cr_colMod,0,1.0));
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
@@ -262,6 +281,7 @@ function render() {
 		gl.uniform1f(cl_thetaLoc, 0.0);
 		gl.uniform1f(cl_xLoc, -0.25);
 		gl.uniform1f(cl_yLoc, -0.25);
+		gl.uniform4fv(cl_colLoc, vec4(cl_colMod,1.0-cl_colMod,0,1.0));
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
