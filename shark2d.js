@@ -62,24 +62,20 @@ var turnLeft = false;
 var turnRight = false;
 var sTheta;
 
-//scare shark from wall (every 3 hits)
+// scare shark from wall (every 3 hits)
 var sharkScare = 0;
 
-//total hits to kill shark
+// total hits to kill shark
 var sharkHP = 30;
 
-//cage strength
+// cage strength
 var c_topStr = 600;
 var c_bottomStr = 600;
 var c_leftStr = 600;
 var c_rightStr = 600;
 
-var topElement;
-var bottomElement;
-var leftElement;
-var rightElement;
-var hpElement;
 
+// text variables
 var topNode;
 var bottomNode;
 var leftNode;
@@ -90,11 +86,12 @@ window.onload = function init()
 {
     canvas = document.getElementById( "gl-canvas" );
 	
-	topElement = document.getElementById("top");
-	bottomElement = document.getElementById("bottom");
-	leftElement = document.getElementById("left");
-	rightElement = document.getElementById("right");
-	hpElement = document.getElementById("hp");
+	// initialize variable text display
+	var topElement = document.getElementById("top");
+	var bottomElement = document.getElementById("bottom");
+	var leftElement = document.getElementById("left");
+	var rightElement = document.getElementById("right");
+	var hpElement = document.getElementById("hp");
 	
 	topNode = document.createTextNode("");
 	bottomNode = document.createTextNode("");
@@ -108,19 +105,17 @@ window.onload = function init()
 	rightElement.appendChild(rightNode);
 	hpElement.appendChild(hpNode);
 	
+	// configure webgl
     gl = WebGLUtils.setupWebGL( canvas );
     if ( !gl ) { alert( "WebGL isn't available" ); }
-
-    //
-    //  Configure WebGL
-    //
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clearColor( 0.0, 0.0, 1.0, 1.0 );
 	
+	// event listeners
 	document.onkeyup = handleKeyUp;
 	canvas.onclick = shootWeapon;
 	
-    //  Load shaders and initialize attribute buffers
+    // load shaders and initialize attribute buffers
     ct_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cb_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cl_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
@@ -228,7 +223,6 @@ window.onload = function init()
 	thetaLoc2 = gl.getUniformLocation( shark_prog, "theta" );
 	
 	sharkEnter();
-	
     render();
 };
 
@@ -238,34 +232,32 @@ function handleKeyUp(event) {
  	if(event.keyCode == 16){
  		alert(ptheta + " " + theta);
  	}
-
     if (event.keyCode == 37 || event.keyCode ==  65) {
-        //Left Arrow Key
+        // left arrow key or A
         sTheta = ptheta;
         turnLeft = true;
     } else if (event.keyCode == 39 || event.keyCode == 68) {
-        //Right Arrow Key
+        // right arrow key or D
         sTheta = ptheta;
         turnRight = true;
     } else if (event.keyCode == 32) {
-		//Spacebar
+		// spacebar
 		shootWeapon();
     }
-	
 }
 
 function render() {
     
 	gl.clear( gl.COLOR_BUFFER_BIT);
 	
+	// draw and update text
 	topNode.nodeValue = c_rightStr.toFixed(0);
 	bottomNode.nodeValue = c_topStr.toFixed(0);
 	leftNode.nodeValue = c_bottomStr.toFixed(0);
 	rightNode.nodeValue = c_topStr.toFixed(0);
 	hpNode.nodeValue = sharkHP.toFixed(0);
 	
-	
-	//draw top cage if still strong
+	// draw top cage if still strong
 	if (c_topStr > 0){
 		ct_colMod = c_topStr/600;
 		gl.useProgram( ct_prog );
@@ -279,7 +271,7 @@ function render() {
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
-	//draw bottom cage if still strong
+	// draw bottom cage if still strong
 	if (c_bottomStr > 0){
 		cb_colMod = c_bottomStr/600;
 		gl.useProgram( cb_prog );
@@ -293,7 +285,7 @@ function render() {
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
-	//draw right cage if still strong
+	// draw right cage if still strong
 	if (c_rightStr > 0){
 		cr_colMod = c_rightStr/600;
 		gl.useProgram( cr_prog );
@@ -307,7 +299,7 @@ function render() {
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
-	//draw left cage if still strong
+	// draw left cage if still strong
 	if (c_leftStr > 0){
 		cl_colMod = c_leftStr/600;
 		gl.useProgram( cl_prog );
@@ -321,8 +313,7 @@ function render() {
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
-	
-	//player
+	// player
 	rotatePlayer();
 	gl.useProgram( player_prog );
 	gl.enableVertexAttribArray( player_vPosition );
@@ -331,9 +322,7 @@ function render() {
     gl.uniform1f( thetaLoc1, ptheta );
 	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 3 );
 	
-	
-
-	//shark
+	// shark
 	if (sharkHP > 0){
 		gl.useProgram( shark_prog );
 		gl.enableVertexAttribArray( shark_vPosition );
@@ -342,7 +331,7 @@ function render() {
 
 		switch(sharkSide){
 			case(0):
-			//shark coming from top
+			// shark coming from top
 			if (c_topStr > 0 && sharky < 0.25){
 				sharkySpd = 0;
 				c_topStr--;
@@ -356,7 +345,7 @@ function render() {
 			break;
 
 			case(1):
-			//shark coming from right
+			// shark coming from right
 			if (c_rightStr > 0 && sharkx < 0.25){
 				sharkxSpd = 0;
 				c_rightStr--;
@@ -370,7 +359,7 @@ function render() {
 			break;
 
 			case(2):
-			//shark coming from bot
+			// shark coming from bot
 			if (c_bottomStr > 0 && sharky > -0.25){
 				sharkySpd = 0;
 				c_bottomStr--;
@@ -383,9 +372,8 @@ function render() {
 			}
 			break;
 			
-
 			case(3):
-			//shark coming from left
+			// shark coming from left
 			if (c_leftStr > 0 && sharkx > -0.25){
 				sharkxSpd = 0;
 				c_leftStr--;
@@ -401,8 +389,6 @@ function render() {
 
 		gl.uniform1f( sharkyLoc, sharky );
 		gl.uniform1f( sharkxLoc, sharkx );
-		
-		
 		gl.uniform1f( thetaLoc2, theta );
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
@@ -463,13 +449,12 @@ function sharkEnter(){
 }
 
 function shootWeapon(){
-	
 	if (ptheta == theta) {
 		sharkScare++;
 		sharkHP--;
-	}	
+	}
 	
-	//reset shark after being hit 3 times
+	// reset shark after being hit 3 times
 	if (sharkScare > 2 && sharkHP > 0){
 		sharkEnter();
 		sharkScare = 0;
