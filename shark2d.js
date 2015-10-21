@@ -19,10 +19,27 @@ var cl_prog;
 var cr_prog;
 var player_prog;
 var shark_prog;
+
 var ct_vPosition;
+var ct_thetaLoc;
+var ct_xLoc;
+var ct_yLoc;
+
 var cb_vPosition;
+var cb_thetaLoc;
+var cb_xLoc;
+var cb_yLoc;
+
 var cl_vPosition;
+var cl_thetaLoc;
+var cl_xLoc;
+var cl_yLoc;
+
 var cr_vPosition;
+var cr_thetaLoc;
+var cr_xLoc;
+var cr_yLoc;
+
 var player_vPosition;
 var shark_vPosition;
 var ct_Buffer;
@@ -74,51 +91,64 @@ window.onload = function init()
 	
 	// top
 	var cage_top = [
-        vec2(  0.25, 0.25 ),
-        vec2(  0.25, 0.20 ),
-        vec2( -0.25,  0.25 ),
-        vec2( -0.25, 0.20 )
+        vec2(0.0, 0.0),
+        vec2(0.0, 0.05),
+        vec2(0.5, 0.05),
+        vec2(0.5, 0.0)
     ];
 	ct_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, ct_Buffer );
 	gl.bufferData( gl.ARRAY_BUFFER, flatten(cage_top), gl.STATIC_DRAW );
-	ct_vPosition = gl.getAttribLocation( ct_prog, "vPosition" );
-    
+	ct_vPosition = gl.getAttribLocation(ct_prog, "vPosition" );
+    ct_thetaLoc = gl.getUniformLocation(ct_prog, "theta");
+    ct_xLoc = gl.getUniformLocation(ct_prog, "xPos");
+    ct_yLoc = gl.getUniformLocation(ct_prog, "yPos");
+
 	// bottom
 	var cage_bottom = [
-        vec2(  0.25, -0.20 ),
-        vec2(  0.25, -0.25 ),
-        vec2( -0.25,  -0.20 ),
-        vec2( -0.25, -0.25 )
+        vec2(0.0, 0.0),
+        vec2(0.0, 0.05),
+        vec2(0.5, 0.05),
+        vec2(0.5, 0.0)
     ];
 	cb_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, cb_Buffer );
-	gl.bufferData( gl.ARRAY_BUFFER, flatten(cage_bottom), gl.STATIC_DRAW );
-	cb_vPosition = gl.getAttribLocation( cb_prog, "vPosition" );
+	gl.bufferData( gl.ARRAY_BUFFER, flatten(cage_top), gl.STATIC_DRAW );
+	cb_vPosition = gl.getAttribLocation(cb_prog, "vPosition" );
+    cb_thetaLoc = gl.getUniformLocation(cb_prog, "theta");
+    cb_xLoc = gl.getUniformLocation(cb_prog, "xPos");
+    cb_yLoc = gl.getUniformLocation(cb_prog, "yPos");
 
 	// left
 	var cage_left = [
-        vec2(  -0.20, 0.25 ),
-        vec2(  -0.20, -0.25 ),
-        vec2( -0.25,  0.25 ),
-        vec2( -0.25, -0.25 )
+        vec2(0.0, 0.0),
+        vec2(0.0, 0.05),
+        vec2(0.5, 0.05),
+        vec2(0.5, 0.0)
     ];
 	cl_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, cl_Buffer );
 	gl.bufferData( gl.ARRAY_BUFFER, flatten(cage_left), gl.STATIC_DRAW );
 	cl_vPosition = gl.getAttribLocation( cl_prog, "vPosition" );
+	cl_thetaLoc = gl.getUniformLocation(cl_prog, "theta");
+    cl_xLoc = gl.getUniformLocation(cl_prog, "xPos");
+    cl_yLoc = gl.getUniformLocation(cl_prog, "yPos");
+	
 
 	// right
 	var cage_right = [
-        vec2(  0.25, 0.25 ),
-        vec2(  0.25, -0.25 ),
-        vec2( 0.20,  0.25 ),
-        vec2( 0.20, -0.25 )
+        vec2(0.0, 0.0),
+        vec2(0.0, 0.05),
+        vec2(0.5, 0.05),
+        vec2(0.5, 0.0)
     ];
 	cr_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, cr_Buffer );
 	gl.bufferData( gl.ARRAY_BUFFER, flatten(cage_right), gl.STATIC_DRAW );
 	cr_vPosition = gl.getAttribLocation( cr_prog, "vPosition" );
+    cr_thetaLoc = gl.getUniformLocation(cr_prog, "theta");
+    cr_xLoc = gl.getUniformLocation(cr_prog, "xPos");
+    cr_yLoc = gl.getUniformLocation(cr_prog, "yPos");
 	
 	// player
 	var player = [
@@ -188,40 +218,53 @@ function render() {
 	gl.clear( gl.COLOR_BUFFER_BIT);
 	
 	//draw top cage if still strong
-	if (c_rightStr > 0){
+	if (c_topStr > 0){
 		gl.useProgram( ct_prog );
 		gl.enableVertexAttribArray( ct_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, ct_Buffer );
 		gl.vertexAttribPointer( ct_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
+		gl.uniform1f(ct_thetaLoc, (Math.PI/2));
+		gl.uniform1f(ct_xLoc, 0.25);
+		gl.uniform1f(ct_yLoc, -0.25);
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
 	//draw bottom cage if still strong
-	if (c_leftStr > 0){
+	if (c_bottomStr > 0){
 		gl.useProgram( cb_prog );
 		gl.enableVertexAttribArray( cb_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cb_Buffer );
 		gl.vertexAttribPointer( cb_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
+		gl.uniform1f(cb_thetaLoc, (Math.PI/2));
+		gl.uniform1f(cb_xLoc, 0.25);
+		gl.uniform1f(cb_yLoc, 0.2);
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
 	//draw right cage if still strong
-	if (c_topStr > 0){
-		gl.useProgram( cl_prog );
+	if (c_rightStr > 0){
+		gl.useProgram( cr_prog );
 		gl.enableVertexAttribArray( cr_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cr_Buffer );
 		gl.vertexAttribPointer( cr_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
+		gl.uniform1f(cr_thetaLoc, 0.0);
+		gl.uniform1f(cr_xLoc, 0.2);
+		gl.uniform1f(cr_yLoc, -0.25);
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
 	//draw left cage if still strong
-	if (c_bottomStr > 0){
-		gl.useProgram( cr_prog );
+	if (c_leftStr > 0){
+		gl.useProgram( cl_prog );
 		gl.enableVertexAttribArray( cl_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cl_Buffer );
 		gl.vertexAttribPointer( cl_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
+		gl.uniform1f(cl_thetaLoc, 0.0);
+		gl.uniform1f(cl_xLoc, -0.25);
+		gl.uniform1f(cl_yLoc, -0.25);
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
+	
 	
 	//player
 	rotatePlayer();
@@ -232,6 +275,8 @@ function render() {
     gl.uniform1f( thetaLoc1, ptheta );
 	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 3 );
 	
+	
+
 	//shark
 	if (sharkHP > 0){
 		gl.useProgram( shark_prog );
