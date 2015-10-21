@@ -251,10 +251,10 @@ function render() {
 	gl.clear( gl.COLOR_BUFFER_BIT);
 	
 	// draw and update text
-	topNode.nodeValue = c_rightStr.toFixed(0);
-	bottomNode.nodeValue = c_topStr.toFixed(0);
-	leftNode.nodeValue = c_bottomStr.toFixed(0);
-	rightNode.nodeValue = c_topStr.toFixed(0);
+	topNode.nodeValue = c_topStr.toFixed(0);
+	bottomNode.nodeValue = c_bottomStr.toFixed(0);
+	leftNode.nodeValue = c_leftStr.toFixed(0);
+	rightNode.nodeValue = c_rightStr.toFixed(0);
 	hpNode.nodeValue = sharkHP.toFixed(0);
 	
 	// draw top cage if still strong
