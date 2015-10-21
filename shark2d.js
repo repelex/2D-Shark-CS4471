@@ -19,10 +19,35 @@ var cl_prog;
 var cr_prog;
 var player_prog;
 var shark_prog;
+
 var ct_vPosition;
+var ct_thetaLoc;
+var ct_xLoc;
+var ct_yLoc;
+var ct_colLoc;
+var ct_colMod = 0;
+
 var cb_vPosition;
+var cb_thetaLoc;
+var cb_xLoc;
+var cb_yLoc;
+var cb_colLoc;
+var cb_colMod = 0;
+
 var cl_vPosition;
+var cl_thetaLoc;
+var cl_xLoc;
+var cl_yLoc;
+var cl_colLoc;
+var cl_colMod = 0;
+
 var cr_vPosition;
+var cr_thetaLoc;
+var cr_xLoc;
+var cr_yLoc;
+var cr_colLoc;
+var cr_colMod = 0;
+
 var player_vPosition;
 var shark_vPosition;
 var ct_Buffer;
@@ -49,6 +74,8 @@ var c_bottomStr = 600;
 var c_leftStr = 600;
 var c_rightStr = 600;
 
+var test = 0;
+
 window.onload = function init()
 {
     canvas = document.getElementById( "gl-canvas" );
@@ -74,51 +101,68 @@ window.onload = function init()
 	
 	// top
 	var cage_top = [
-        vec2(  0.25, 0.25 ),
-        vec2(  0.25, 0.20 ),
-        vec2( -0.25,  0.25 ),
-        vec2( -0.25, 0.20 )
+        vec2(0.0, 0.0),
+        vec2(0.0, 0.05),
+        vec2(0.5, 0.05),
+        vec2(0.5, 0.0)
     ];
 	ct_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, ct_Buffer );
 	gl.bufferData( gl.ARRAY_BUFFER, flatten(cage_top), gl.STATIC_DRAW );
-	ct_vPosition = gl.getAttribLocation( ct_prog, "vPosition" );
-    
+	ct_vPosition = gl.getAttribLocation(ct_prog, "vPosition" );
+    ct_thetaLoc = gl.getUniformLocation(ct_prog, "theta");
+    ct_xLoc = gl.getUniformLocation(ct_prog, "xPos");
+    ct_yLoc = gl.getUniformLocation(ct_prog, "yPos");
+    ct_colLoc = gl.getUniformLocation(ct_prog, "u_colour");
+
 	// bottom
 	var cage_bottom = [
-        vec2(  0.25, -0.20 ),
-        vec2(  0.25, -0.25 ),
-        vec2( -0.25,  -0.20 ),
-        vec2( -0.25, -0.25 )
+        vec2(0.0, 0.0),
+        vec2(0.0, 0.05),
+        vec2(0.5, 0.05),
+        vec2(0.5, 0.0)
     ];
 	cb_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, cb_Buffer );
-	gl.bufferData( gl.ARRAY_BUFFER, flatten(cage_bottom), gl.STATIC_DRAW );
-	cb_vPosition = gl.getAttribLocation( cb_prog, "vPosition" );
+	gl.bufferData( gl.ARRAY_BUFFER, flatten(cage_top), gl.STATIC_DRAW );
+	cb_vPosition = gl.getAttribLocation(cb_prog, "vPosition" );
+    cb_thetaLoc = gl.getUniformLocation(cb_prog, "theta");
+    cb_xLoc = gl.getUniformLocation(cb_prog, "xPos");
+    cb_yLoc = gl.getUniformLocation(cb_prog, "yPos");
+    cb_colLoc = gl.getUniformLocation(cb_prog, "u_colour");
 
 	// left
 	var cage_left = [
-        vec2(  -0.20, 0.25 ),
-        vec2(  -0.20, -0.25 ),
-        vec2( -0.25,  0.25 ),
-        vec2( -0.25, -0.25 )
+        vec2(0.0, 0.0),
+        vec2(0.0, 0.05),
+        vec2(0.5, 0.05),
+        vec2(0.5, 0.0)
     ];
 	cl_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, cl_Buffer );
 	gl.bufferData( gl.ARRAY_BUFFER, flatten(cage_left), gl.STATIC_DRAW );
 	cl_vPosition = gl.getAttribLocation( cl_prog, "vPosition" );
+	cl_thetaLoc = gl.getUniformLocation(cl_prog, "theta");
+    cl_xLoc = gl.getUniformLocation(cl_prog, "xPos");
+    cl_yLoc = gl.getUniformLocation(cl_prog, "yPos");
+    cl_colLoc = gl.getUniformLocation(cl_prog, "u_colour");
+	
 
 	// right
 	var cage_right = [
-        vec2(  0.25, 0.25 ),
-        vec2(  0.25, -0.25 ),
-        vec2( 0.20,  0.25 ),
-        vec2( 0.20, -0.25 )
+        vec2(0.0, 0.0),
+        vec2(0.0, 0.05),
+        vec2(0.5, 0.05),
+        vec2(0.5, 0.0)
     ];
 	cr_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, cr_Buffer );
 	gl.bufferData( gl.ARRAY_BUFFER, flatten(cage_right), gl.STATIC_DRAW );
 	cr_vPosition = gl.getAttribLocation( cr_prog, "vPosition" );
+    cr_thetaLoc = gl.getUniformLocation(cr_prog, "theta");
+    cr_xLoc = gl.getUniformLocation(cr_prog, "xPos");
+    cr_yLoc = gl.getUniformLocation(cr_prog, "yPos");
+    cr_colLoc = gl.getUniformLocation(cr_prog, "u_colour");
 	
 	// player
 	var player = [
@@ -134,10 +178,17 @@ window.onload = function init()
 	
 	// shark
 	var shark = [
+		/*
         vec2(  -0.25, 0.0 ),
         vec2(  -0.5, 0.1 ),
 		vec2( -0.5,  -0.1 ),
         vec2( -1.0,  0.0 )
+        */
+        vec2(0,0),
+        vec2(-0.1, 0.1),
+        vec2(0, 0.3),
+        vec2(0.1, 0.1),
+
     ];
 	shark_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
@@ -188,40 +239,61 @@ function render() {
 	gl.clear( gl.COLOR_BUFFER_BIT);
 	
 	//draw top cage if still strong
-	if (c_rightStr > 0){
+	if (c_topStr > 0){
+		ct_colMod = c_topStr/600;
 		gl.useProgram( ct_prog );
 		gl.enableVertexAttribArray( ct_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, ct_Buffer );
 		gl.vertexAttribPointer( ct_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
+		gl.uniform1f(ct_thetaLoc, 0);
+		gl.uniform1f(ct_xLoc, -0.25);
+		gl.uniform1f(ct_yLoc, 0.2);
+		gl.uniform4fv(ct_colLoc, vec4(1.0-ct_colMod,ct_colMod,0,1.0))
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
 	//draw bottom cage if still strong
-	if (c_leftStr > 0){
+	if (c_bottomStr > 0){
+		cb_colMod = c_bottomStr/600;
 		gl.useProgram( cb_prog );
 		gl.enableVertexAttribArray( cb_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cb_Buffer );
 		gl.vertexAttribPointer( cb_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
+		gl.uniform1f(cb_thetaLoc, 0);
+		gl.uniform1f(cb_xLoc, -0.25);
+		gl.uniform1f(cb_yLoc, -0.25);
+		gl.uniform4fv(cb_colLoc, vec4(1.0-cb_colMod,cb_colMod,0,1.0));
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
 	//draw right cage if still strong
-	if (c_topStr > 0){
-		gl.useProgram( cl_prog );
+	if (c_rightStr > 0){
+		cr_colMod = c_rightStr/600;
+		gl.useProgram( cr_prog );
 		gl.enableVertexAttribArray( cr_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cr_Buffer );
 		gl.vertexAttribPointer( cr_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
+		gl.uniform1f(cr_thetaLoc, (Math.PI/2));
+		gl.uniform1f(cr_xLoc, 0.25);
+		gl.uniform1f(cr_yLoc, -0.25);
+		gl.uniform4fv(cr_colLoc, vec4(1.0-cr_colMod,cr_colMod,0,1.0));
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
 	//draw left cage if still strong
-	if (c_bottomStr > 0){
-		gl.useProgram( cr_prog );
+	if (c_leftStr > 0){
+		cl_colMod = c_leftStr/600;
+		gl.useProgram( cl_prog );
 		gl.enableVertexAttribArray( cl_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cl_Buffer );
 		gl.vertexAttribPointer( cl_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
+		gl.uniform1f(cl_thetaLoc, (Math.PI/2));
+		gl.uniform1f(cl_xLoc, -0.2);
+		gl.uniform1f(cl_yLoc, -0.25);
+		gl.uniform4fv(cl_colLoc, vec4(1.0-cl_colMod,cl_colMod,0,1.0));
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
+	
 	
 	//player
 	rotatePlayer();
@@ -232,80 +304,80 @@ function render() {
     gl.uniform1f( thetaLoc1, ptheta );
 	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 3 );
 	
+	
+
 	//shark
 	if (sharkHP > 0){
 		gl.useProgram( shark_prog );
 		gl.enableVertexAttribArray( shark_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
 		gl.vertexAttribPointer( shark_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		
-		if(sharkSide==0 && c_topStr < 1){
-			//top broke
-			if (sharky < -0.5){
+
+		switch(sharkSide){
+			case(0):
+			//shark coming from top
+			if (c_topStr > 0 && sharky < 0.25){
 				sharkySpd = 0;
-				alert("You lose!");
+				c_topStr--;
 			} else {
-				sharky += sharkySpd;
+				sharkySpd = -0.01;
 			}
-		} else if(sharkSide==2 && c_bottomStr < 1){
-			//bottom broke
-			if (sharky > 0.5){
+			sharky += sharkySpd;
+			if (sharky < -0.15){
+				alert("You lose");
+			}
+			break;
+
+			case(1):
+			//shark coming from right
+			if (c_rightStr > 0 && sharkx < 0.25){
+				sharkxSpd = 0;
+				c_rightStr--;
+			} else {
+				sharkxSpd = -0.01;
+			}
+			sharkx += sharkxSpd;
+			if (sharkx < -0.15){
+				alert("You lose");
+			}
+			break;
+
+			case(2):
+			//shark coming from bot
+			if (c_bottomStr > 0 && sharky > -0.25){
 				sharkySpd = 0;
-				alert("You lose!");
+				c_bottomStr--;
 			} else {
-				sharky += sharkySpd;
+				sharkySpd = 0.01;
 			}
-		} else {
-			//weaken y value wall
-			if (sharky > -0.01 && sharky < 0.01){
-				sharkySpd = 0;
-				if (sharkSide==0){
-					//c_topStr -=1;
-				}
-				else{
-					//c_bottomStr -=1;
-				}
+			sharky += sharkySpd;
+			if (sharky > -0.15){
+				alert("You lose");
+			}
+			break;
+			
+
+			case(3):
+			//shark coming from left
+			if (c_leftStr > 0 && sharkx > -0.25){
+				sharkxSpd = 0;
+				c_leftStr--;
 			} else {
-				sharky += sharkySpd;
+				sharkxSpd = 0.01;
 			}
+			sharkx += sharkxSpd;
+			if (sharkx > -0.15){
+				alert("You lose");
+			}
+			break;
 		}
+
 		gl.uniform1f( sharkyLoc, sharky );
-		
-		if(sharkSide==1 && c_rightStr < 1){
-			//right broke
-			if (sharkx < -0.5){
-				sharkxSpd = 0;
-				alert("You lose!");
-			} else {
-				sharkx += sharkxSpd;
-			}
-		} else if(sharkSide==3 && c_leftStr < 1){
-			//left broke
-			if (sharkx > 0.5){
-				sharkxSpd = 0;
-				alert("You lose!");
-			} else {
-				sharkx += sharkxSpd;
-			}
-		} else {
-			//weaken x value wall
-			if (sharkx > -0.01 && sharkx < 0.01){
-				sharkxSpd = 0;
-				if (sharkSide==1){
-					//c_rightStr -=1;
-				}
-				else{
-					//c_leftStr -=1;
-				}
-			} else {
-				sharkx += sharkxSpd;
-			}
-		}
 		gl.uniform1f( sharkxLoc, sharkx );
 		
 		
 		gl.uniform1f( thetaLoc2, theta );
-		gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
     window.requestAnimFrame(render);
@@ -327,31 +399,29 @@ function rotatePlayer(){
 }
 
 function sharkEnter(){
-	
 	sharkSide = randomInt(4);
-	
 	if (sharkSide == 0){
 		sharky = 1;
 		sharkx = 0;
-		theta = Math.PI;
+		theta = 0;
 		sharkySpd = -0.01;
 		sharkxSpd = 0;
 	} else if (sharkSide == 1){
 		sharky = 0;
 		sharkx = 1;
-		theta = Math.PI/2;
+		theta = 3*Math.PI/2;
 		sharkySpd = 0;
 		sharkxSpd = -0.01;
 	} else if (sharkSide == 2){
 		sharky = -1;
 		sharkx = 0;
-		theta = 0;
+		theta = Math.PI;
 		sharkySpd = 0.01;
 		sharkxSpd = 0;
 	} else if (sharkSide == 3){
 		sharky = 0;
 		sharkx = -1;
-		theta = Math.PI*3/2;
+		theta = Math.PI/2;
 		sharkySpd = 0;
 		sharkxSpd = 0.01;
 	}
