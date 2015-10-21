@@ -74,9 +74,6 @@ var c_bottomStr = 600;
 var c_leftStr = 600;
 var c_rightStr = 600;
 
-<<<<<<< HEAD
-var test = 0;
-=======
 var topElement;
 var bottomElement;
 var leftElement;
@@ -88,7 +85,6 @@ var bottomNode;
 var leftNode;
 var rightNode;
 var hpNode;
->>>>>>> refs/heads/pr/6
 
 window.onload = function init()
 {
