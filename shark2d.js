@@ -125,7 +125,7 @@ window.onload = function init()
 	cb_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cl_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cr_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
-	player_prog = initShaders( gl, "player-vs", "player-fs" );
+	player_prog = initShaders( gl, "vertex-shader", "player-fs" );
 	shark_prog = initShaders( gl, "vertex-shader", "shark-fs" );
 	
 	// top
@@ -235,7 +235,10 @@ window.onload = function init()
 function handleKeyUp(event) {
     //You can uncomment the next line to find out each key's code
     //alert(event.keyCode);
- 
+ 	if(event.keyCode == 16){
+ 		alert(ptheta + " " + theta);
+ 	}
+
     if (event.keyCode == 37 || event.keyCode ==  65) {
         //Left Arrow Key
         sTheta = ptheta;
@@ -347,7 +350,7 @@ function render() {
 				sharkySpd = -0.01;
 			}
 			sharky += sharkySpd;
-			if (sharky < -0.15){
+			if (sharky < 0.15){
 				alert("You lose");
 			}
 			break;
@@ -361,7 +364,7 @@ function render() {
 				sharkxSpd = -0.01;
 			}
 			sharkx += sharkxSpd;
-			if (sharkx < -0.15){
+			if (sharkx < 0.15){
 				alert("You lose");
 			}
 			break;
@@ -411,15 +414,23 @@ function rotatePlayer(){
 	if (turnLeft){
 		if (ptheta - sTheta < Math.PI/2)
 			ptheta += Math.PI/10
-		else
+		else {
 			turnLeft = false;
+			ptheta = ptheta%(Math.PI*2);
+		}
+
 	}
 	if (turnRight){
 		if (-1*(ptheta - sTheta) < Math.PI/2)
 			ptheta -= Math.PI/10
-		else
+		else {
 			turnRight = false;
+			ptheta += 2*Math.PI;
+			ptheta = ptheta%(Math.PI*2);
+		}
+
 	}
+	
 }
 
 function sharkEnter(){
@@ -453,35 +464,10 @@ function sharkEnter(){
 
 function shootWeapon(){
 	
-	if (ptheta > -1 && ptheta < 1){
-		//shoot right
-		if (sharkSide == 1){
-			//hit
-			sharkScare+=1;
-			sharkHP-=1;
-		}
-	} else if (ptheta > 1 && ptheta < 2){
-		//shoot up
-		if (sharkSide == 0){
-			//hit
-			sharkScare+=1;
-			sharkHP-=1;
-		}
-	} else if (ptheta > 3 && ptheta < 4){
-		//shoot left
-		if (sharkSide == 3){
-			//hit
-			sharkScare+=1;
-			sharkHP-=1;
-		}
-	} else if (ptheta > 4 && ptheta < 5){
-		//shoot down
-		if (sharkSide == 2){
-			//hit
-			sharkScare+=1;
-			sharkHP-=1;
-		}
-	}
+	if (ptheta == theta) {
+		sharkScare++;
+		sharkHP--;
+	}	
 	
 	//reset shark after being hit 3 times
 	if (sharkScare > 2 && sharkHP > 0){
