@@ -74,12 +74,44 @@ var c_bottomStr = 600;
 var c_leftStr = 600;
 var c_rightStr = 600;
 
+<<<<<<< HEAD
 var test = 0;
+=======
+var topElement;
+var bottomElement;
+var leftElement;
+var rightElement;
+var hpElement;
+
+var topNode;
+var bottomNode;
+var leftNode;
+var rightNode;
+var hpNode;
+>>>>>>> refs/heads/pr/6
 
 window.onload = function init()
 {
     canvas = document.getElementById( "gl-canvas" );
-    
+	
+	topElement = document.getElementById("top");
+	bottomElement = document.getElementById("bottom");
+	leftElement = document.getElementById("left");
+	rightElement = document.getElementById("right");
+	hpElement = document.getElementById("hp");
+	
+	topNode = document.createTextNode("");
+	bottomNode = document.createTextNode("");
+	leftNode = document.createTextNode("");
+	rightNode = document.createTextNode("");
+	hpNode = document.createTextNode("");
+	
+	topElement.appendChild(topNode);
+	bottomElement.appendChild(bottomNode);
+	leftElement.appendChild(leftNode);
+	rightElement.appendChild(rightNode);
+	hpElement.appendChild(hpNode);
+	
     gl = WebGLUtils.setupWebGL( canvas );
     if ( !gl ) { alert( "WebGL isn't available" ); }
 
@@ -90,6 +122,7 @@ window.onload = function init()
     gl.clearColor( 0.0, 0.0, 1.0, 1.0 );
 	
 	document.onkeyup = handleKeyUp;
+	canvas.onclick = shootWeapon;
 	
     //  Load shaders and initialize attribute buffers
     ct_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
@@ -207,11 +240,11 @@ function handleKeyUp(event) {
     //You can uncomment the next line to find out each key's code
     //alert(event.keyCode);
  
-    if (event.keyCode == 37) {
+    if (event.keyCode == 37 || event.keyCode ==  65) {
         //Left Arrow Key
         sTheta = ptheta;
         turnLeft = true;
-    } else if (event.keyCode == 39) {
+    } else if (event.keyCode == 39 || event.keyCode == 68) {
         //Right Arrow Key
         sTheta = ptheta;
         turnRight = true;
@@ -220,23 +253,18 @@ function handleKeyUp(event) {
 		shootWeapon();
     }
 	
-	//reset shark after being hit 3 times
-	if (sharkScare > 2 && sharkHP > 0){
-		sharkEnter();
-		sharkScare = 0;
-	}
-	
-	// shark dead
-	if (sharkHP < 1){
-		//TODO: hide shark after killed
-		alert("Shark is dead. RIP.");
-	}
-	
 }
 
 function render() {
     
 	gl.clear( gl.COLOR_BUFFER_BIT);
+	
+	topNode.nodeValue = c_rightStr.toFixed(0);
+	bottomNode.nodeValue = c_topStr.toFixed(0);
+	leftNode.nodeValue = c_bottomStr.toFixed(0);
+	rightNode.nodeValue = c_topStr.toFixed(0);
+	hpNode.nodeValue = sharkHP.toFixed(0);
+	
 	
 	//draw top cage if still strong
 	if (c_topStr > 0){
@@ -457,6 +485,17 @@ function shootWeapon(){
 			sharkScare+=1;
 			sharkHP-=1;
 		}
+	}
+	
+	//reset shark after being hit 3 times
+	if (sharkScare > 2 && sharkHP > 0){
+		sharkEnter();
+		sharkScare = 0;
+	}
+	
+	// shark dead
+	if (sharkHP < 1){
+		//alert("Shark is dead. RIP.");
 	}
 }
 

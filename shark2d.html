@@ -78,11 +78,20 @@ main()
 <script type="text/javascript" src="initShaders.js"></script>
 <script type="text/javascript" src="MV.js"></script>
 <script type="text/javascript" src="shark2d.js"></script>
+<link rel="stylesheet" type="text/css" href="shark2d.css">
 </head>   
 
 <body>
 <canvas id="gl-canvas" width="512" height="512">
 Oops ... your browser doesn't support the HTML5 canvas element
 </canvas>
+<div id="overlay">
+	<div>top strength: <span id="top"></span></div>
+    <div>bottom strength: <span id="bottom"></span></div>
+	<div>left strength: <span id="left"></span></div>
+    <div>right strength: <span id="right"></span></div>
+	<div>shark health: <span id="hp"></span></div>
+</div>
+
 </body>
 </html>
