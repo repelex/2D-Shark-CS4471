@@ -178,10 +178,17 @@ window.onload = function init()
 	
 	// shark
 	var shark = [
+		/*
         vec2(  -0.25, 0.0 ),
         vec2(  -0.5, 0.1 ),
 		vec2( -0.5,  -0.1 ),
         vec2( -1.0,  0.0 )
+        */
+        vec2(0,0),
+        vec2(-0.1, 0.1),
+        vec2(0, 0.3),
+        vec2(0.1, 0.1),
+
     ];
 	shark_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
@@ -233,55 +240,57 @@ function render() {
 	
 	//draw top cage if still strong
 	if (c_topStr > 0){
+		ct_colMod = c_topStr/600;
 		gl.useProgram( ct_prog );
 		gl.enableVertexAttribArray( ct_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, ct_Buffer );
 		gl.vertexAttribPointer( ct_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.uniform1f(ct_thetaLoc, (Math.PI/2));
-		gl.uniform1f(ct_xLoc, 0.25);
-		gl.uniform1f(ct_yLoc, -0.25);
-		gl.uniform4fv(ct_colLoc, vec4(ct_colMod,1.0-ct_colMod,0,1.0))
+		gl.uniform1f(ct_thetaLoc, 0);
+		gl.uniform1f(ct_xLoc, -0.25);
+		gl.uniform1f(ct_yLoc, 0.2);
+		gl.uniform4fv(ct_colLoc, vec4(1.0-ct_colMod,ct_colMod,0,1.0))
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
-
-	ct_colMod+=0.01;
 	
 	//draw bottom cage if still strong
 	if (c_bottomStr > 0){
+		cb_colMod = c_bottomStr/600;
 		gl.useProgram( cb_prog );
 		gl.enableVertexAttribArray( cb_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cb_Buffer );
 		gl.vertexAttribPointer( cb_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.uniform1f(cb_thetaLoc, (Math.PI/2));
-		gl.uniform1f(cb_xLoc, 0.25);
-		gl.uniform1f(cb_yLoc, 0.2);
-		gl.uniform4fv(cb_colLoc, vec4(cb_colMod,1.0-cb_colMod,0,1.0));
+		gl.uniform1f(cb_thetaLoc, 0);
+		gl.uniform1f(cb_xLoc, -0.25);
+		gl.uniform1f(cb_yLoc, -0.25);
+		gl.uniform4fv(cb_colLoc, vec4(1.0-cb_colMod,cb_colMod,0,1.0));
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
 	//draw right cage if still strong
 	if (c_rightStr > 0){
+		cr_colMod = c_rightStr/600;
 		gl.useProgram( cr_prog );
 		gl.enableVertexAttribArray( cr_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cr_Buffer );
 		gl.vertexAttribPointer( cr_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.uniform1f(cr_thetaLoc, 0.0);
-		gl.uniform1f(cr_xLoc, 0.2);
+		gl.uniform1f(cr_thetaLoc, (Math.PI/2));
+		gl.uniform1f(cr_xLoc, 0.25);
 		gl.uniform1f(cr_yLoc, -0.25);
-		gl.uniform4fv(cr_colLoc, vec4(cr_colMod,1.0-cr_colMod,0,1.0));
+		gl.uniform4fv(cr_colLoc, vec4(1.0-cr_colMod,cr_colMod,0,1.0));
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
 	//draw left cage if still strong
 	if (c_leftStr > 0){
+		cl_colMod = c_leftStr/600;
 		gl.useProgram( cl_prog );
 		gl.enableVertexAttribArray( cl_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cl_Buffer );
 		gl.vertexAttribPointer( cl_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		gl.uniform1f(cl_thetaLoc, 0.0);
-		gl.uniform1f(cl_xLoc, -0.25);
+		gl.uniform1f(cl_thetaLoc, (Math.PI/2));
+		gl.uniform1f(cl_xLoc, -0.2);
 		gl.uniform1f(cl_yLoc, -0.25);
-		gl.uniform4fv(cl_colLoc, vec4(cl_colMod,1.0-cl_colMod,0,1.0));
+		gl.uniform4fv(cl_colLoc, vec4(1.0-cl_colMod,cl_colMod,0,1.0));
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
@@ -303,74 +312,72 @@ function render() {
 		gl.enableVertexAttribArray( shark_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
 		gl.vertexAttribPointer( shark_vPosition, 2, gl.FLOAT, false, 0, 0 );
-		
-		if(sharkSide==0 && c_topStr < 1){
-			//top broke
-			if (sharky < -0.5){
+
+		switch(sharkSide){
+			case(0):
+			//shark coming from top
+			if (c_topStr > 0 && sharky < 0.25){
 				sharkySpd = 0;
-				alert("You lose!");
+				c_topStr--;
 			} else {
-				sharky += sharkySpd;
+				sharkySpd = -0.01;
 			}
-		} else if(sharkSide==2 && c_bottomStr < 1){
-			//bottom broke
-			if (sharky > 0.5){
+			sharky += sharkySpd;
+			if (sharky < -0.15){
+				alert("You lose");
+			}
+			break;
+
+			case(1):
+			//shark coming from right
+			if (c_rightStr > 0 && sharkx < 0.25){
+				sharkxSpd = 0;
+				c_rightStr--;
+			} else {
+				sharkxSpd = -0.01;
+			}
+			sharkx += sharkxSpd;
+			if (sharkx < -0.15){
+				alert("You lose");
+			}
+			break;
+
+			case(2):
+			//shark coming from bot
+			if (c_bottomStr > 0 && sharky > -0.25){
 				sharkySpd = 0;
-				alert("You lose!");
+				c_bottomStr--;
 			} else {
-				sharky += sharkySpd;
+				sharkySpd = 0.01;
 			}
-		} else {
-			//weaken y value wall
-			if (sharky > -0.01 && sharky < 0.01){
-				sharkySpd = 0;
-				if (sharkSide==0){
-					//c_topStr -=1;
-				}
-				else{
-					//c_bottomStr -=1;
-				}
+			sharky += sharkySpd;
+			if (sharky > -0.15){
+				alert("You lose");
+			}
+			break;
+			
+
+			case(3):
+			//shark coming from left
+			if (c_leftStr > 0 && sharkx > -0.25){
+				sharkxSpd = 0;
+				c_leftStr--;
 			} else {
-				sharky += sharkySpd;
+				sharkxSpd = 0.01;
 			}
+			sharkx += sharkxSpd;
+			if (sharkx > -0.15){
+				alert("You lose");
+			}
+			break;
 		}
+
 		gl.uniform1f( sharkyLoc, sharky );
-		
-		if(sharkSide==1 && c_rightStr < 1){
-			//right broke
-			if (sharkx < -0.5){
-				sharkxSpd = 0;
-				alert("You lose!");
-			} else {
-				sharkx += sharkxSpd;
-			}
-		} else if(sharkSide==3 && c_leftStr < 1){
-			//left broke
-			if (sharkx > 0.5){
-				sharkxSpd = 0;
-				alert("You lose!");
-			} else {
-				sharkx += sharkxSpd;
-			}
-		} else {
-			//weaken x value wall
-			if (sharkx > -0.01 && sharkx < 0.01){
-				sharkxSpd = 0;
-				if (sharkSide==1){
-					//c_rightStr -=1;
-				}
-				else{
-					//c_leftStr -=1;
-				}
-			} else {
-				sharkx += sharkxSpd;
-			}
-		}
 		gl.uniform1f( sharkxLoc, sharkx );
 		
 		
 		gl.uniform1f( thetaLoc2, theta );
-		gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
     window.requestAnimFrame(render);
@@ -392,31 +399,29 @@ function rotatePlayer(){
 }
 
 function sharkEnter(){
-	
 	sharkSide = randomInt(4);
-	
 	if (sharkSide == 0){
 		sharky = 1;
 		sharkx = 0;
-		theta = Math.PI;
+		theta = 0;
 		sharkySpd = -0.01;
 		sharkxSpd = 0;
 	} else if (sharkSide == 1){
 		sharky = 0;
 		sharkx = 1;
-		theta = Math.PI/2;
+		theta = 3*Math.PI/2;
 		sharkySpd = 0;
 		sharkxSpd = -0.01;
 	} else if (sharkSide == 2){
 		sharky = -1;
 		sharkx = 0;
-		theta = 0;
+		theta = Math.PI;
 		sharkySpd = 0.01;
 		sharkxSpd = 0;
 	} else if (sharkSide == 3){
 		sharky = 0;
 		sharkx = -1;
-		theta = Math.PI*3/2;
+		theta = Math.PI/2;
 		sharkySpd = 0;
 		sharkxSpd = 0.01;
 	}
