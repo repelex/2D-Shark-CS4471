@@ -66,14 +66,15 @@ var sTheta;
 var sharkScare = 0;
 
 // total hits to kill shark
-var sharkHP = 30;
+var sharkH = 30
+var sharkHP;
 
 // cage strength
-var c_topStr = 600;
-var c_bottomStr = 600;
-var c_leftStr = 600;
-var c_rightStr = 600;
-
+var cage_str = 300;
+var c_topStr;
+var c_bottomStr;
+var c_leftStr;
+var c_rightStr;
 
 // text variables
 var topNode;
@@ -81,6 +82,9 @@ var bottomNode;
 var leftNode;
 var rightNode;
 var hpNode;
+
+var player;
+var shark;
 
 window.onload = function init()
 {
@@ -171,7 +175,6 @@ window.onload = function init()
     cl_yLoc = gl.getUniformLocation(cl_prog, "yPos");
     cl_colLoc = gl.getUniformLocation(cl_prog, "u_colour");
 	
-
 	// right
 	var cage_right = [
         vec2(0.0, 0.0),
@@ -189,10 +192,10 @@ window.onload = function init()
     cr_colLoc = gl.getUniformLocation(cr_prog, "u_colour");
 	
 	// player
-	var player = [
-        vec2(  -0.2, 0.0 ),
-        vec2(  0.0, 0.15 ),
-        vec2( 0.2,  0.0 )
+	player = [
+        vec2(-0.15, -0.05 ),
+        vec2( 0.0, 0.1 ),
+        vec2( 0.15, -0.05 )
     ];
 	player_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, player_Buffer );
@@ -201,18 +204,11 @@ window.onload = function init()
 	thetaLoc1 = gl.getUniformLocation( player_prog, "theta" );
 	
 	// shark
-	var shark = [
-		/*
-        vec2(  -0.25, 0.0 ),
-        vec2(  -0.5, 0.1 ),
-		vec2( -0.5,  -0.1 ),
-        vec2( -1.0,  0.0 )
-        */
-        vec2(0,0),
-        vec2(-0.1, 0.1),
-        vec2(0, 0.3),
-        vec2(0.1, 0.1),
-
+	shark = [
+        vec2( 0.0, 0.0),
+        vec2(-0.15, 0.2),
+        vec2( 0.15, 0.2),
+		vec2( 0.0, 0.6)
     ];
 	shark_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
@@ -222,6 +218,12 @@ window.onload = function init()
 	sharkyLoc = gl.getUniformLocation( shark_prog, "yPos" );
 	thetaLoc2 = gl.getUniformLocation( shark_prog, "theta" );
 	
+	c_topStr = cage_str;
+	c_bottomStr = cage_str;
+	c_leftStr = cage_str;
+	c_rightStr = cage_str;
+	sharkHP = sharkH;
+	
 	sharkEnter();
     render();
 };
@@ -229,9 +231,6 @@ window.onload = function init()
 function handleKeyUp(event) {
     //You can uncomment the next line to find out each key's code
     //alert(event.keyCode);
- 	if(event.keyCode == 16){
- 		alert(ptheta + " " + theta);
- 	}
     if (event.keyCode == 37 || event.keyCode ==  65) {
         // left arrow key or A
         sTheta = ptheta;
@@ -251,15 +250,15 @@ function render() {
 	gl.clear( gl.COLOR_BUFFER_BIT);
 	
 	// draw and update text
-	topNode.nodeValue = c_topStr.toFixed(0);
-	bottomNode.nodeValue = c_bottomStr.toFixed(0);
-	leftNode.nodeValue = c_leftStr.toFixed(0);
-	rightNode.nodeValue = c_rightStr.toFixed(0);
-	hpNode.nodeValue = sharkHP.toFixed(0);
+	topNode.nodeValue = ((c_topStr/cage_str).toFixed(2)*100).toFixed(0) + "%";
+	bottomNode.nodeValue = ((c_bottomStr/cage_str).toFixed(2)*100).toFixed(0) + "%";
+	leftNode.nodeValue = ((c_leftStr/cage_str).toFixed(2)*100).toFixed(0) + "%";
+	rightNode.nodeValue = ((c_rightStr/cage_str).toFixed(2)*100).toFixed(0) + "%";
+	hpNode.nodeValue = sharkHP.toFixed(0) + "/" + sharkH;
 	
 	// draw top cage if still strong
 	if (c_topStr > 0){
-		ct_colMod = c_topStr/600;
+		ct_colMod = c_topStr/cage_str;
 		gl.useProgram( ct_prog );
 		gl.enableVertexAttribArray( ct_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, ct_Buffer );
@@ -273,7 +272,7 @@ function render() {
 	
 	// draw bottom cage if still strong
 	if (c_bottomStr > 0){
-		cb_colMod = c_bottomStr/600;
+		cb_colMod = c_bottomStr/cage_str;
 		gl.useProgram( cb_prog );
 		gl.enableVertexAttribArray( cb_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cb_Buffer );
@@ -287,7 +286,7 @@ function render() {
 	
 	// draw right cage if still strong
 	if (c_rightStr > 0){
-		cr_colMod = c_rightStr/600;
+		cr_colMod = c_rightStr/cage_str;
 		gl.useProgram( cr_prog );
 		gl.enableVertexAttribArray( cr_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cr_Buffer );
@@ -301,7 +300,7 @@ function render() {
 	
 	// draw left cage if still strong
 	if (c_leftStr > 0){
-		cl_colMod = c_leftStr/600;
+		cl_colMod = c_leftStr/cage_str;
 		gl.useProgram( cl_prog );
 		gl.enableVertexAttribArray( cl_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cl_Buffer );
@@ -320,7 +319,7 @@ function render() {
 	gl.bindBuffer( gl.ARRAY_BUFFER, player_Buffer );
 	gl.vertexAttribPointer( player_vPosition, 2, gl.FLOAT, false, 0, 0 );
     gl.uniform1f( thetaLoc1, ptheta );
-	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 3 );
+	gl.drawArrays( gl.TRIANGLE_STRIP, 0, player.length );
 	
 	// shark
 	if (sharkHP > 0){
@@ -390,7 +389,7 @@ function render() {
 		gl.uniform1f( sharkyLoc, sharky );
 		gl.uniform1f( sharkxLoc, sharkx );
 		gl.uniform1f( thetaLoc2, theta );
-		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
+		gl.drawArrays( gl.TRIANGLE_STRIP, 0, shark.length );
 	}
 	
     window.requestAnimFrame(render);
