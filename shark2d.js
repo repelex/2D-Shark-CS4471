@@ -1,5 +1,8 @@
-var canvas;
 var gl;
+var canvas;
+var context;
+var player;
+var shark;
 
 var theta = 0.0;
 var ptheta = 0.0;
@@ -25,28 +28,24 @@ var ct_thetaLoc;
 var ct_xLoc;
 var ct_yLoc;
 var ct_colLoc;
-var ct_colMod = 0;
 
 var cb_vPosition;
 var cb_thetaLoc;
 var cb_xLoc;
 var cb_yLoc;
 var cb_colLoc;
-var cb_colMod = 0;
 
 var cl_vPosition;
 var cl_thetaLoc;
 var cl_xLoc;
 var cl_yLoc;
 var cl_colLoc;
-var cl_colMod = 0;
 
 var cr_vPosition;
 var cr_thetaLoc;
 var cr_xLoc;
 var cr_yLoc;
 var cr_colLoc;
-var cr_colMod = 0;
 
 var player_vPosition;
 var shark_vPosition;
@@ -56,21 +55,19 @@ var cl_Buffer;
 var cr_Buffer;
 var player_Buffer;
 var shark_Buffer;
-var cBuffer;
-var vColor;
 var turnLeft = false;
 var turnRight = false;
 var sTheta;
 
-// scare shark from wall (every 3 hits)
-var sharkScare = 0;
+var sharkScare = 0; // scare shark from wall (every 3 hits)
+var sharkMax = 30 // total hits to kill shark
+var sharkHealth;
 
-// total hits to kill shark
-var sharkH = 30
-var sharkHP;
+var playerDead = false;
+var sharkDead = false;
 
 // cage strength
-var cage_str = 300;
+var c_maxStr = 300;
 var c_topStr;
 var c_bottomStr;
 var c_leftStr;
@@ -82,32 +79,11 @@ var bottomNode;
 var leftNode;
 var rightNode;
 var hpNode;
-
-var player;
-var shark;
+var endNode;
 
 window.onload = function init()
 {
     canvas = document.getElementById( "gl-canvas" );
-	
-	// initialize variable text display
-	var topElement = document.getElementById("top");
-	var bottomElement = document.getElementById("bottom");
-	var leftElement = document.getElementById("left");
-	var rightElement = document.getElementById("right");
-	var hpElement = document.getElementById("hp");
-	
-	topNode = document.createTextNode("");
-	bottomNode = document.createTextNode("");
-	leftNode = document.createTextNode("");
-	rightNode = document.createTextNode("");
-	hpNode = document.createTextNode("");
-	
-	topElement.appendChild(topNode);
-	bottomElement.appendChild(bottomNode);
-	leftElement.appendChild(leftNode);
-	rightElement.appendChild(rightNode);
-	hpElement.appendChild(hpNode);
 	
 	// configure webgl
     gl = WebGLUtils.setupWebGL( canvas );
@@ -218,19 +194,12 @@ window.onload = function init()
 	sharkyLoc = gl.getUniformLocation( shark_prog, "yPos" );
 	thetaLoc2 = gl.getUniformLocation( shark_prog, "theta" );
 	
-	c_topStr = cage_str;
-	c_bottomStr = cage_str;
-	c_leftStr = cage_str;
-	c_rightStr = cage_str;
-	sharkHP = sharkH;
-	
+	initText();
 	sharkEnter();
     render();
 };
 
 function handleKeyUp(event) {
-    //You can uncomment the next line to find out each key's code
-    //alert(event.keyCode);
     if (event.keyCode == 37 || event.keyCode ==  65) {
         // left arrow key or A
         sTheta = ptheta;
@@ -245,20 +214,25 @@ function handleKeyUp(event) {
     }
 }
 
-function render() {
-    
+function render(){
+    var cb_colMod = 0;
+	var ct_colMod = 0;
+	var cl_colMod = 0;
+	var cr_colMod = 0;
+	
 	gl.clear( gl.COLOR_BUFFER_BIT);
 	
 	// draw and update text
-	topNode.nodeValue = ((c_topStr/cage_str).toFixed(2)*100).toFixed(0) + "%";
-	bottomNode.nodeValue = ((c_bottomStr/cage_str).toFixed(2)*100).toFixed(0) + "%";
-	leftNode.nodeValue = ((c_leftStr/cage_str).toFixed(2)*100).toFixed(0) + "%";
-	rightNode.nodeValue = ((c_rightStr/cage_str).toFixed(2)*100).toFixed(0) + "%";
-	hpNode.nodeValue = sharkHP.toFixed(0) + "/" + sharkH;
+	topNode.nodeValue = ((c_topStr/c_maxStr)*100).toFixed(0) + "%";
+	bottomNode.nodeValue = ((c_bottomStr/c_maxStr)*100).toFixed(0) + "%";
+	leftNode.nodeValue = ((c_leftStr/c_maxStr)*100).toFixed(0) + "%";
+	rightNode.nodeValue = ((c_rightStr/c_maxStr)*100).toFixed(0) + "%";
+	hpNode.nodeValue = sharkHealth.toFixed(0) + "/" + sharkMax;
+	endNode.nodeValue = "";
 	
 	// draw top cage if still strong
 	if (c_topStr > 0){
-		ct_colMod = c_topStr/cage_str;
+		ct_colMod = c_topStr/c_maxStr;
 		gl.useProgram( ct_prog );
 		gl.enableVertexAttribArray( ct_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, ct_Buffer );
@@ -272,7 +246,7 @@ function render() {
 	
 	// draw bottom cage if still strong
 	if (c_bottomStr > 0){
-		cb_colMod = c_bottomStr/cage_str;
+		cb_colMod = c_bottomStr/c_maxStr;
 		gl.useProgram( cb_prog );
 		gl.enableVertexAttribArray( cb_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cb_Buffer );
@@ -286,7 +260,7 @@ function render() {
 	
 	// draw right cage if still strong
 	if (c_rightStr > 0){
-		cr_colMod = c_rightStr/cage_str;
+		cr_colMod = c_rightStr/c_maxStr;
 		gl.useProgram( cr_prog );
 		gl.enableVertexAttribArray( cr_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cr_Buffer );
@@ -300,7 +274,7 @@ function render() {
 	
 	// draw left cage if still strong
 	if (c_leftStr > 0){
-		cl_colMod = c_leftStr/cage_str;
+		cl_colMod = c_leftStr/c_maxStr;
 		gl.useProgram( cl_prog );
 		gl.enableVertexAttribArray( cl_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cl_Buffer );
@@ -313,16 +287,18 @@ function render() {
 	}
 	
 	// player
-	rotatePlayer();
-	gl.useProgram( player_prog );
-	gl.enableVertexAttribArray( player_vPosition );
-	gl.bindBuffer( gl.ARRAY_BUFFER, player_Buffer );
-	gl.vertexAttribPointer( player_vPosition, 2, gl.FLOAT, false, 0, 0 );
-    gl.uniform1f( thetaLoc1, ptheta );
-	gl.drawArrays( gl.TRIANGLE_STRIP, 0, player.length );
+	if (!playerDead){
+		rotatePlayer();
+		gl.useProgram( player_prog );
+		gl.enableVertexAttribArray( player_vPosition );
+		gl.bindBuffer( gl.ARRAY_BUFFER, player_Buffer );
+		gl.vertexAttribPointer( player_vPosition, 2, gl.FLOAT, false, 0, 0 );
+		gl.uniform1f( thetaLoc1, ptheta );
+		gl.drawArrays( gl.TRIANGLE_STRIP, 0, player.length );
+	}
 	
 	// shark
-	if (sharkHP > 0){
+	if (!sharkDead){
 		gl.useProgram( shark_prog );
 		gl.enableVertexAttribArray( shark_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
@@ -339,7 +315,7 @@ function render() {
 			}
 			sharky += sharkySpd;
 			if (sharky < 0.15){
-				alert("You lose");
+				playerDead = true;
 			}
 			break;
 
@@ -353,7 +329,7 @@ function render() {
 			}
 			sharkx += sharkxSpd;
 			if (sharkx < 0.15){
-				alert("You lose");
+				playerDead = true;
 			}
 			break;
 
@@ -367,7 +343,7 @@ function render() {
 			}
 			sharky += sharkySpd;
 			if (sharky > -0.15){
-				alert("You lose");
+				playerDead = true;
 			}
 			break;
 			
@@ -381,7 +357,7 @@ function render() {
 			}
 			sharkx += sharkxSpd;
 			if (sharkx > -0.15){
-				alert("You lose");
+				playerDead = true;
 			}
 			break;
 		}
@@ -390,6 +366,14 @@ function render() {
 		gl.uniform1f( sharkxLoc, sharkx );
 		gl.uniform1f( thetaLoc2, theta );
 		gl.drawArrays( gl.TRIANGLE_STRIP, 0, shark.length );
+	}
+	
+	if (sharkDead){
+		endNode.nodeValue = "YOU WIN!";
+	}
+	
+	if (playerDead){
+		endNode.nodeValue = "YOU LOSE!";
 	}
 	
     window.requestAnimFrame(render);
@@ -403,7 +387,6 @@ function rotatePlayer(){
 			turnLeft = false;
 			ptheta = ptheta%(Math.PI*2);
 		}
-
 	}
 	if (turnRight){
 		if (-1*(ptheta - sTheta) < Math.PI/2)
@@ -413,9 +396,7 @@ function rotatePlayer(){
 			ptheta += 2*Math.PI;
 			ptheta = ptheta%(Math.PI*2);
 		}
-
 	}
-	
 }
 
 function sharkEnter(){
@@ -447,21 +428,48 @@ function sharkEnter(){
 	}
 }
 
+function initText(){
+	var topElement = document.getElementById("top");
+	var bottomElement = document.getElementById("bottom");
+	var leftElement = document.getElementById("left");
+	var rightElement = document.getElementById("right");
+	var hpElement = document.getElementById("hp");
+	var endElement = document.getElementById("end");
+	
+	topNode = document.createTextNode("");
+	bottomNode = document.createTextNode("");
+	leftNode = document.createTextNode("");
+	rightNode = document.createTextNode("");
+	hpNode = document.createTextNode("");
+	endNode = document.createTextNode("");
+	
+	topElement.appendChild(topNode);
+	bottomElement.appendChild(bottomNode);
+	leftElement.appendChild(leftNode);
+	rightElement.appendChild(rightNode);
+	hpElement.appendChild(hpNode);
+	endElement.appendChild(endNode);
+	
+	c_topStr = c_maxStr;
+	c_bottomStr = c_maxStr;
+	c_leftStr = c_maxStr;
+	c_rightStr = c_maxStr;
+	sharkHealth = sharkMax;
+}
+
 function shootWeapon(){
 	if (ptheta == theta) {
 		sharkScare++;
-		sharkHP--;
+		sharkHealth--;
 	}
-	
 	// reset shark after being hit 3 times
-	if (sharkScare > 2 && sharkHP > 0){
+	if (sharkScare > 2 && sharkHealth > 0){
 		sharkEnter();
 		sharkScare = 0;
 	}
 	
-	// shark dead
-	if (sharkHP < 1){
-		//alert("Shark is dead. RIP.");
+	if (sharkHealth < 1){
+		sharkDead = true;
 	}
 }
 
