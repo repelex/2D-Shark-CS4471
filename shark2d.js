@@ -59,6 +59,14 @@ var turnLeft = false;
 var turnRight = false;
 var sTheta;
 
+var laser;
+var laser_prog;
+var laser_vPos;
+var laser_Buffer;
+var laser_thetaLoc;
+var isShooting = false;
+var laser_fade = 5;
+
 var sharkScare = 0; // scare shark from wall (every 3 hits)
 var sharkMax = 30 // total hits to kill shark
 var sharkHealth;
@@ -102,6 +110,7 @@ window.onload = function init()
 	cr_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	player_prog = initShaders( gl, "vertex-shader", "player-fs" );
 	shark_prog = initShaders( gl, "vertex-shader", "shark-fs" );
+	laser_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	
 	// top
 	var cage_top = [
@@ -193,7 +202,20 @@ window.onload = function init()
 	sharkxLoc = gl.getUniformLocation( shark_prog, "xPos" );
 	sharkyLoc = gl.getUniformLocation( shark_prog, "yPos" );
 	thetaLoc2 = gl.getUniformLocation( shark_prog, "theta" );
-	
+
+	laser = [
+		vec2(-0.01, 0),
+		vec2(-0.01, 1.0),
+		vec2(0.01, 1.0),
+		vec2(0.01, 0)
+	];
+	laser_Buffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, laser_Buffer);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(laser), gl.STATIC_DRAW);
+	laser_vPos = gl.getAttribLocation(laser_prog, "vPosition");
+	laser_thetaLoc = gl.getUniformLocation(laser_prog, "theta");
+	laser_colLoc = gl.getUniformLocation(laser_prog, "u_colour");
+
 	initText();
 	sharkEnter();
     render();
@@ -284,6 +306,19 @@ function render(){
 		gl.uniform1f(cl_yLoc, -0.25);
 		gl.uniform4fv(cl_colLoc, vec4(1.0-cl_colMod,cl_colMod,0,1.0));
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
+	}
+
+	if (isShooting){
+		gl.useProgram(laser_prog);
+		gl.enableVertexAttribArray(laser_vPos);
+		gl.bindBuffer(gl.ARRAY_BUFFER, laser_Buffer);
+		gl.vertexAttribPointer(laser_vPos, 2, gl.FLOAT, false, 0, 0 );
+		gl.uniform1f(laser_thetaLoc, ptheta );
+		gl.uniform4fv(laser_colLoc, vec4(1.0, 0.0, 1.0, 1.0));
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4);
+		laser_fade--
+		if (laser_fade == 0)
+			isShooting = false;
 	}
 	
 	// player
@@ -458,6 +493,10 @@ function initText(){
 }
 
 function shootWeapon(){
+	if (!isShooting)
+		isShooting = true;
+		laser_fade = 5;
+
 	if (ptheta == theta) {
 		sharkScare++;
 		sharkHealth--;
