@@ -1,5 +1,8 @@
-var canvas;
 var gl;
+var canvas;
+var context;
+var player;
+var shark;
 
 var theta = 0.0;
 var ptheta = 0.0;
@@ -25,28 +28,24 @@ var ct_thetaLoc;
 var ct_xLoc;
 var ct_yLoc;
 var ct_colLoc;
-var ct_colMod = 0;
 
 var cb_vPosition;
 var cb_thetaLoc;
 var cb_xLoc;
 var cb_yLoc;
 var cb_colLoc;
-var cb_colMod = 0;
 
 var cl_vPosition;
 var cl_thetaLoc;
 var cl_xLoc;
 var cl_yLoc;
 var cl_colLoc;
-var cl_colMod = 0;
 
 var cr_vPosition;
 var cr_thetaLoc;
 var cr_xLoc;
 var cr_yLoc;
 var cr_colLoc;
-var cr_colMod = 0;
 
 var player_vPosition;
 var shark_vPosition;
@@ -56,48 +55,62 @@ var cl_Buffer;
 var cr_Buffer;
 var player_Buffer;
 var shark_Buffer;
-var cBuffer;
-var vColor;
 var turnLeft = false;
 var turnRight = false;
 var sTheta;
 
-//scare shark from wall (every 3 hits)
-var sharkScare = 0;
+var laser;
+var laser_prog;
+var laser_vPos;
+var laser_Buffer;
+var laser_thetaLoc;
+var isShooting = false;
+var laser_fade = 5;
 
-//total hits to kill shark
-var sharkHP = 30;
+var sharkScare = 0; // scare shark from wall (every 3 hits)
+var sharkMax = 30 // total hits to kill shark
+var sharkHealth;
 
-//cage strength
-var c_topStr = 600;
-var c_bottomStr = 600;
-var c_leftStr = 600;
-var c_rightStr = 600;
+var playerDead = false;
+var sharkDead = false;
 
-var test = 0;
+// cage strength
+var c_maxStr = 300;
+var c_topStr;
+var c_bottomStr;
+var c_leftStr;
+var c_rightStr;
+
+// text variables
+var topNode;
+var bottomNode;
+var leftNode;
+var rightNode;
+var hpNode;
+var endNode;
 
 window.onload = function init()
 {
     canvas = document.getElementById( "gl-canvas" );
-    
+	
+	// configure webgl
     gl = WebGLUtils.setupWebGL( canvas );
     if ( !gl ) { alert( "WebGL isn't available" ); }
-
-    //
-    //  Configure WebGL
-    //
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clearColor( 0.0, 0.0, 1.0, 1.0 );
 	
+	// event listeners
 	document.onkeyup = handleKeyUp;
+	canvas.onclick = shootWeapon;
 	
-    //  Load shaders and initialize attribute buffers
+    // load shaders and initialize attribute buffers
     ct_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cb_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cl_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	cr_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
-	player_prog = initShaders( gl, "player-vs", "player-fs" );
+	player_prog = initShaders( gl, "vertex-shader", "player-fs" );
 	shark_prog = initShaders( gl, "vertex-shader", "shark-fs" );
+	laser_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	
 	// top
 	var cage_top = [
@@ -147,7 +160,6 @@ window.onload = function init()
     cl_yLoc = gl.getUniformLocation(cl_prog, "yPos");
     cl_colLoc = gl.getUniformLocation(cl_prog, "u_colour");
 	
-
 	// right
 	var cage_right = [
         vec2(0.0, 0.0),
@@ -165,10 +177,10 @@ window.onload = function init()
     cr_colLoc = gl.getUniformLocation(cr_prog, "u_colour");
 	
 	// player
-	var player = [
-        vec2(  -0.2, 0.0 ),
-        vec2(  0.0, 0.15 ),
-        vec2( 0.2,  0.0 )
+	player = [
+        vec2(-0.15, -0.05 ),
+        vec2( 0.0, 0.1 ),
+        vec2( 0.15, -0.05 )
     ];
 	player_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, player_Buffer );
@@ -177,18 +189,11 @@ window.onload = function init()
 	thetaLoc1 = gl.getUniformLocation( player_prog, "theta" );
 	
 	// shark
-	var shark = [
-		/*
-        vec2(  -0.25, 0.0 ),
-        vec2(  -0.5, 0.1 ),
-		vec2( -0.5,  -0.1 ),
-        vec2( -1.0,  0.0 )
-        */
-        vec2(0,0),
-        vec2(-0.1, 0.1),
-        vec2(0, 0.3),
-        vec2(0.1, 0.1),
-
+	shark = [
+        vec2( 0.0, 0.0),
+        vec2(-0.15, 0.2),
+        vec2( 0.15, 0.2),
+		vec2( 0.0, 0.6)
     ];
 	shark_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
@@ -197,50 +202,59 @@ window.onload = function init()
 	sharkxLoc = gl.getUniformLocation( shark_prog, "xPos" );
 	sharkyLoc = gl.getUniformLocation( shark_prog, "yPos" );
 	thetaLoc2 = gl.getUniformLocation( shark_prog, "theta" );
-	
+
+	laser = [
+		vec2(-0.01, 0),
+		vec2(-0.01, 1.0),
+		vec2(0.01, 1.0),
+		vec2(0.01, 0)
+	];
+	laser_Buffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, laser_Buffer);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(laser), gl.STATIC_DRAW);
+	laser_vPos = gl.getAttribLocation(laser_prog, "vPosition");
+	laser_thetaLoc = gl.getUniformLocation(laser_prog, "theta");
+	laser_colLoc = gl.getUniformLocation(laser_prog, "u_colour");
+
+	initText();
 	sharkEnter();
-	
     render();
 };
 
 function handleKeyUp(event) {
-    //You can uncomment the next line to find out each key's code
-    //alert(event.keyCode);
- 
-    if (event.keyCode == 37) {
-        //Left Arrow Key
+    if (event.keyCode == 37 || event.keyCode ==  65) {
+        // left arrow key or A
         sTheta = ptheta;
         turnLeft = true;
-    } else if (event.keyCode == 39) {
-        //Right Arrow Key
+    } else if (event.keyCode == 39 || event.keyCode == 68) {
+        // right arrow key or D
         sTheta = ptheta;
         turnRight = true;
     } else if (event.keyCode == 32) {
-		//Spacebar
+		// spacebar
 		shootWeapon();
     }
-	
-	//reset shark after being hit 3 times
-	if (sharkScare > 2 && sharkHP > 0){
-		sharkEnter();
-		sharkScare = 0;
-	}
-	
-	// shark dead
-	if (sharkHP < 1){
-		//TODO: hide shark after killed
-		alert("Shark is dead. RIP.");
-	}
-	
 }
 
-function render() {
-    
+function render(){
+    var cb_colMod = 0;
+	var ct_colMod = 0;
+	var cl_colMod = 0;
+	var cr_colMod = 0;
+	
 	gl.clear( gl.COLOR_BUFFER_BIT);
 	
-	//draw top cage if still strong
+	// draw and update text
+	topNode.nodeValue = ((c_topStr/c_maxStr)*100).toFixed(0) + "%";
+	bottomNode.nodeValue = ((c_bottomStr/c_maxStr)*100).toFixed(0) + "%";
+	leftNode.nodeValue = ((c_leftStr/c_maxStr)*100).toFixed(0) + "%";
+	rightNode.nodeValue = ((c_rightStr/c_maxStr)*100).toFixed(0) + "%";
+	hpNode.nodeValue = sharkHealth.toFixed(0) + "/" + sharkMax;
+	endNode.nodeValue = "";
+	
+	// draw top cage if still strong
 	if (c_topStr > 0){
-		ct_colMod = c_topStr/600;
+		ct_colMod = c_topStr/c_maxStr;
 		gl.useProgram( ct_prog );
 		gl.enableVertexAttribArray( ct_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, ct_Buffer );
@@ -252,9 +266,9 @@ function render() {
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
-	//draw bottom cage if still strong
+	// draw bottom cage if still strong
 	if (c_bottomStr > 0){
-		cb_colMod = c_bottomStr/600;
+		cb_colMod = c_bottomStr/c_maxStr;
 		gl.useProgram( cb_prog );
 		gl.enableVertexAttribArray( cb_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cb_Buffer );
@@ -266,9 +280,9 @@ function render() {
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
-	//draw right cage if still strong
+	// draw right cage if still strong
 	if (c_rightStr > 0){
-		cr_colMod = c_rightStr/600;
+		cr_colMod = c_rightStr/c_maxStr;
 		gl.useProgram( cr_prog );
 		gl.enableVertexAttribArray( cr_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cr_Buffer );
@@ -280,9 +294,9 @@ function render() {
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
 	
-	//draw left cage if still strong
+	// draw left cage if still strong
 	if (c_leftStr > 0){
-		cl_colMod = c_leftStr/600;
+		cl_colMod = c_leftStr/c_maxStr;
 		gl.useProgram( cl_prog );
 		gl.enableVertexAttribArray( cl_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, cl_Buffer );
@@ -293,21 +307,33 @@ function render() {
 		gl.uniform4fv(cl_colLoc, vec4(1.0-cl_colMod,cl_colMod,0,1.0));
 		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
 	}
-	
-	
-	//player
-	rotatePlayer();
-	gl.useProgram( player_prog );
-	gl.enableVertexAttribArray( player_vPosition );
-	gl.bindBuffer( gl.ARRAY_BUFFER, player_Buffer );
-	gl.vertexAttribPointer( player_vPosition, 2, gl.FLOAT, false, 0, 0 );
-    gl.uniform1f( thetaLoc1, ptheta );
-	gl.drawArrays( gl.TRIANGLE_STRIP, 0, 3 );
-	
-	
 
-	//shark
-	if (sharkHP > 0){
+	if (isShooting){
+		gl.useProgram(laser_prog);
+		gl.enableVertexAttribArray(laser_vPos);
+		gl.bindBuffer(gl.ARRAY_BUFFER, laser_Buffer);
+		gl.vertexAttribPointer(laser_vPos, 2, gl.FLOAT, false, 0, 0 );
+		gl.uniform1f(laser_thetaLoc, ptheta );
+		gl.uniform4fv(laser_colLoc, vec4(1.0, 0.0, 1.0, 1.0));
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4);
+		laser_fade--
+		if (laser_fade == 0)
+			isShooting = false;
+	}
+	
+	// player
+	if (!playerDead){
+		rotatePlayer();
+		gl.useProgram( player_prog );
+		gl.enableVertexAttribArray( player_vPosition );
+		gl.bindBuffer( gl.ARRAY_BUFFER, player_Buffer );
+		gl.vertexAttribPointer( player_vPosition, 2, gl.FLOAT, false, 0, 0 );
+		gl.uniform1f( thetaLoc1, ptheta );
+		gl.drawArrays( gl.TRIANGLE_STRIP, 0, player.length );
+	}
+	
+	// shark
+	if (!sharkDead){
 		gl.useProgram( shark_prog );
 		gl.enableVertexAttribArray( shark_vPosition );
 		gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
@@ -315,7 +341,7 @@ function render() {
 
 		switch(sharkSide){
 			case(0):
-			//shark coming from top
+			// shark coming from top
 			if (c_topStr > 0 && sharky < 0.25){
 				sharkySpd = 0;
 				c_topStr--;
@@ -323,13 +349,13 @@ function render() {
 				sharkySpd = -0.01;
 			}
 			sharky += sharkySpd;
-			if (sharky < -0.15){
-				alert("You lose");
+			if (sharky < 0.15){
+				playerDead = true;
 			}
 			break;
 
 			case(1):
-			//shark coming from right
+			// shark coming from right
 			if (c_rightStr > 0 && sharkx < 0.25){
 				sharkxSpd = 0;
 				c_rightStr--;
@@ -337,13 +363,13 @@ function render() {
 				sharkxSpd = -0.01;
 			}
 			sharkx += sharkxSpd;
-			if (sharkx < -0.15){
-				alert("You lose");
+			if (sharkx < 0.15){
+				playerDead = true;
 			}
 			break;
 
 			case(2):
-			//shark coming from bot
+			// shark coming from bot
 			if (c_bottomStr > 0 && sharky > -0.25){
 				sharkySpd = 0;
 				c_bottomStr--;
@@ -352,13 +378,12 @@ function render() {
 			}
 			sharky += sharkySpd;
 			if (sharky > -0.15){
-				alert("You lose");
+				playerDead = true;
 			}
 			break;
 			
-
 			case(3):
-			//shark coming from left
+			// shark coming from left
 			if (c_leftStr > 0 && sharkx > -0.25){
 				sharkxSpd = 0;
 				c_leftStr--;
@@ -367,17 +392,23 @@ function render() {
 			}
 			sharkx += sharkxSpd;
 			if (sharkx > -0.15){
-				alert("You lose");
+				playerDead = true;
 			}
 			break;
 		}
 
 		gl.uniform1f( sharkyLoc, sharky );
 		gl.uniform1f( sharkxLoc, sharkx );
-		
-		
 		gl.uniform1f( thetaLoc2, theta );
-		gl.drawArrays( gl.TRIANGLE_FAN, 0, 4 );
+		gl.drawArrays( gl.TRIANGLE_STRIP, 0, shark.length );
+	}
+	
+	if (sharkDead){
+		endNode.nodeValue = "YOU WIN!";
+	}
+	
+	if (playerDead){
+		endNode.nodeValue = "YOU LOSE!";
 	}
 	
     window.requestAnimFrame(render);
@@ -387,14 +418,19 @@ function rotatePlayer(){
 	if (turnLeft){
 		if (ptheta - sTheta < Math.PI/2)
 			ptheta += Math.PI/10
-		else
+		else {
 			turnLeft = false;
+			ptheta = ptheta%(Math.PI*2);
+		}
 	}
 	if (turnRight){
 		if (-1*(ptheta - sTheta) < Math.PI/2)
 			ptheta -= Math.PI/10
-		else
+		else {
 			turnRight = false;
+			ptheta += 2*Math.PI;
+			ptheta = ptheta%(Math.PI*2);
+		}
 	}
 }
 
@@ -427,36 +463,52 @@ function sharkEnter(){
 	}
 }
 
-function shootWeapon(){
+function initText(){
+	var topElement = document.getElementById("top");
+	var bottomElement = document.getElementById("bottom");
+	var leftElement = document.getElementById("left");
+	var rightElement = document.getElementById("right");
+	var hpElement = document.getElementById("hp");
+	var endElement = document.getElementById("end");
 	
-	if (ptheta > -1 && ptheta < 1){
-		//shoot right
-		if (sharkSide == 1){
-			//hit
-			sharkScare+=1;
-			sharkHP-=1;
-		}
-	} else if (ptheta > 1 && ptheta < 2){
-		//shoot up
-		if (sharkSide == 0){
-			//hit
-			sharkScare+=1;
-			sharkHP-=1;
-		}
-	} else if (ptheta > 3 && ptheta < 4){
-		//shoot left
-		if (sharkSide == 3){
-			//hit
-			sharkScare+=1;
-			sharkHP-=1;
-		}
-	} else if (ptheta > 4 && ptheta < 5){
-		//shoot down
-		if (sharkSide == 2){
-			//hit
-			sharkScare+=1;
-			sharkHP-=1;
-		}
+	topNode = document.createTextNode("");
+	bottomNode = document.createTextNode("");
+	leftNode = document.createTextNode("");
+	rightNode = document.createTextNode("");
+	hpNode = document.createTextNode("");
+	endNode = document.createTextNode("");
+	
+	topElement.appendChild(topNode);
+	bottomElement.appendChild(bottomNode);
+	leftElement.appendChild(leftNode);
+	rightElement.appendChild(rightNode);
+	hpElement.appendChild(hpNode);
+	endElement.appendChild(endNode);
+	
+	c_topStr = c_maxStr;
+	c_bottomStr = c_maxStr;
+	c_leftStr = c_maxStr;
+	c_rightStr = c_maxStr;
+	sharkHealth = sharkMax;
+}
+
+function shootWeapon(){
+	if (!isShooting)
+		isShooting = true;
+		laser_fade = 5;
+
+	if (ptheta == theta) {
+		sharkScare++;
+		sharkHealth--;
+	}
+	// reset shark after being hit 3 times
+	if (sharkScare > 2 && sharkHealth > 0){
+		sharkEnter();
+		sharkScare = 0;
+	}
+	
+	if (sharkHealth < 1){
+		sharkDead = true;
 	}
 }
 

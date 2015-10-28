@@ -27,23 +27,6 @@ main()
 }
 </script>
 
-<script id="player-vs" type="x-shader/x-vertex">
-attribute vec4 vPosition;
-uniform float theta;
-void
-main()
-{
-	float s = sin( theta );
-    float c = cos( theta );
-
-    gl_Position.x = -s * vPosition.x + c * vPosition.y;
-    gl_Position.y =  s * vPosition.y + c * vPosition.x;
-    gl_Position.z = 0.0;
-    gl_Position.w = 1.0;
-}
-</script>
-
-
 <script id="fragment-shader" type="x-shader/x-fragment">
 precision mediump float;
 varying vec4 v_colour;
@@ -78,11 +61,28 @@ main()
 <script type="text/javascript" src="initShaders.js"></script>
 <script type="text/javascript" src="MV.js"></script>
 <script type="text/javascript" src="shark2d.js"></script>
+<link rel="stylesheet" type="text/css" href="shark2d.css">
 </head>   
 
 <body>
-<canvas id="gl-canvas" width="512" height="512">
-Oops ... your browser doesn't support the HTML5 canvas element
-</canvas>
+<div class="container">
+	<canvas id="gl-canvas" width="512" height="512">
+	Oops ... your browser doesn't support the HTML5 canvas element
+	</canvas>
+	<div id="overlay">
+		<div>TOP: <span id="top"></span></div>
+		<div>BOTTOM: <span id="bottom"></span></div>
+		<div>LEFT: <span id="left"></span></div>
+		<div>RIGHT: <span id="right"></span></div>
+		<div>SHARK HP: <span id="hp"></span></div>
+	</div>
+	<div id="endgame">
+		<div><span id="end"></span></div>
+	</div>
+	<div id="controls">
+		<div>USE LEFT AND RIGHT KEYS TO TURN AND SPACEBAR TO SHOOT</div>
+	</div>
+</div>
+
 </body>
 </html>
