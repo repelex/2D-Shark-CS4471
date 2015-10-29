@@ -68,6 +68,7 @@ var laser_prog;
 var laser_vPos;
 var laser_Buffer;
 var laser_thetaLoc;
+var laser_colLoc;
 var isShooting = false;
 var laser_fade = 5;
 
@@ -195,9 +196,12 @@ window.onload = function init()
 	// shark
 	shark = [
         vec2( 0.0, 0.0),
-        vec2(-0.15, 0.2),
-        vec2( 0.15, 0.2),
-		vec2( 0.0, 0.6)
+        vec2(-0.12, 0.2),
+        vec2( 0.12, 0.2),
+		vec2( 0.0, 0.6),
+		vec2( 0.0, 0.6),
+		vec2(  0.1, 0.7),
+		vec2( -0.1, 0.7)
     ];
 	shark_Buffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, shark_Buffer );
@@ -220,13 +224,15 @@ window.onload = function init()
 	laser_vPos = gl.getAttribLocation(laser_prog, "vPosition");
 	laser_thetaLoc = gl.getUniformLocation(laser_prog, "theta");
 	laser_colLoc = gl.getUniformLocation(laser_prog, "u_colour");
-
+	
 	initText();
 	sharkEnter();
-    render();
+	render();
+
 };
 
 function handleKeyUp(event) {
+	
     if (event.keyCode == 37 || event.keyCode ==  65) {
         // left arrow key or A
         sTheta = ptheta;
@@ -237,10 +243,12 @@ function handleKeyUp(event) {
         turnRight = true;
     } else if (event.keyCode == 32) {
 		// spacebar
-		if ((!playerDead)&&(!sharkDead)){
-			shootWeapon();
-		}
-    }
+		shootWeapon();
+		
+	} else if (event.keyCode == 13) {
+		// reload game
+		location.reload();
+	}
 }
 
 function render(){
@@ -415,11 +423,11 @@ function render(){
 	}
 	
 	if (sharkDead){
-		endNode.nodeValue = "YOU WIN!";
+		endNode.nodeValue = "YOU WIN! PRESS [ENTER] TO RETRY.";
 	}
 	
 	if (playerDead){
-		endNode.nodeValue = "YOU LOSE!";
+		endNode.nodeValue = "YOU LOSE! PRESS [ENTER] TO RETRY.";
 	}
 	
     window.requestAnimFrame(render);
@@ -505,23 +513,26 @@ function initText(){
 
 function shootWeapon(){
 	
-	if (!isShooting){
-		isShooting = true;
-		laser_fade = 5;
-	}
-
-	if (ptheta == theta) {
-		sharkScare++;
-		sharkHealth--;
-	}
-	// reset shark after being hit 3 times
-	if (sharkScare > 2 && sharkHealth > 0){
-		sharkEnter();
-		sharkScare = 0;
-	}
+	if ((!playerDead)&&(!sharkDead)){
 	
-	if (sharkHealth < 1){
-		sharkDead = true;
+		if (!isShooting){
+			isShooting = true;
+			laser_fade = 5;
+		}
+
+		if (ptheta == theta) {
+			sharkScare++;
+			sharkHealth--;
+		}
+		// reset shark after being hit 3 times
+		if (sharkScare > 2 && sharkHealth > 0){
+			sharkEnter();
+			sharkScare = 0;
+		}
+	
+		if (sharkHealth < 1){
+			sharkDead = true;
+		}
 	}
 }
 
