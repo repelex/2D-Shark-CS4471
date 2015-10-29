@@ -72,6 +72,15 @@ var laser_colLoc;
 var isShooting = false;
 var laser_fade = 5;
 
+var sharkfin;
+var sharkfin_prog;
+var sharkfin_vPos;
+var sharkfin_Buffer;
+var sharkfin_thetaLoc;
+var sharkfin_colLoc;
+var sharkfin_xLoc;
+var sharkfin_yLoc;
+
 var sharkScare = 0; // scare shark from wall (every 3 hits)
 var sharkMax = 30 // total hits to kill shark
 var sharkHealth;
@@ -116,6 +125,7 @@ window.onload = function init()
 	player_prog = initShaders( gl, "vertex-shader", "player-fs" );
 	shark_prog = initShaders( gl, "vertex-shader", "shark-fs" );
 	laser_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
+	sharkfin_prog = initShaders( gl, "vertex-shader", "fragment-shader" );
 	
 	// top
 	cage_top = [
@@ -224,6 +234,20 @@ window.onload = function init()
 	laser_vPos = gl.getAttribLocation(laser_prog, "vPosition");
 	laser_thetaLoc = gl.getUniformLocation(laser_prog, "theta");
 	laser_colLoc = gl.getUniformLocation(laser_prog, "u_colour");
+
+	sharkfin = [
+		vec2(-0.01, 0.1),
+		vec2(0, 0.15),
+		vec2(0.01, 0.1)
+	];
+	sharkfin_Buffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, sharkfin_Buffer);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(sharkfin), gl.STATIC_DRAW);
+	sharkfin_vPos = gl.getAttribLocation(sharkfin_prog, "vPosition");
+	sharkfin_thetaLoc = gl.getUniformLocation(sharkfin_prog, "theta");
+	sharkfin_colLoc = gl.getUniformLocation(sharkfin_prog, "u_colour");
+	sharkfin_xLoc = gl.getUniformLocation(sharkfin_prog, "xPos");
+    sharkfin_yLoc = gl.getUniformLocation(sharkfin_prog, "yPos");
 	
 	initText();
 	sharkEnter();
@@ -420,6 +444,16 @@ function render(){
 		gl.uniform1f( sharkxLoc, sharkx );
 		gl.uniform1f( thetaLoc2, theta );
 		gl.drawArrays( gl.TRIANGLE_STRIP, 0, shark.length );
+
+		gl.useProgram(sharkfin_prog);
+		gl.enableVertexAttribArray(sharkfin_vPos);
+		gl.bindBuffer(gl.ARRAY_BUFFER, sharkfin_Buffer);
+		gl.vertexAttribPointer(sharkfin_vPos, 2, gl.FLOAT, false, 0, 0 );
+		gl.uniform1f(sharkfin_thetaLoc, theta );
+		gl.uniform1f(sharkfin_xLoc, sharkx);
+		gl.uniform1f(sharkfin_yLoc, sharky);
+		gl.uniform4fv(sharkfin_colLoc, vec4(1.0, 0.0, 1.0, 1.0));
+		gl.drawArrays( gl.TRIANGLE_FAN, 0, sharkfin.length );
 	}
 	
 	if (sharkDead){
