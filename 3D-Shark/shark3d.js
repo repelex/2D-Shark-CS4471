@@ -6,11 +6,6 @@ var numVertices  = 36;
 var pointsArray = [];
 var normalsArray = [];
 
-var turnLeft = false;
-var turnRight = false;
-var sTheta;
-var ptheta;
-
 var vertices = [
         vec4( -0.5, -0.5,  0.5, 1.0 ),
         vec4( -0.5,  0.5,  0.5, 1.0 ),
@@ -21,6 +16,18 @@ var vertices = [
         vec4( 0.5,  0.5, -0.5, 1.0 ),
         vec4( 0.5, -0.5, -0.5, 1.0 )
     ];
+
+//color reference 	
+/* var vertexColors = [
+    vec4( 0.0, 0.0, 0.0, 1.0 ),  // black
+    vec4( 1.0, 0.0, 0.0, 1.0 ),  // red
+    vec4( 1.0, 1.0, 0.0, 1.0 ),  // yellow
+    vec4( 0.0, 1.0, 0.0, 1.0 ),  // green
+    vec4( 0.0, 0.0, 1.0, 1.0 ),  // blue
+    vec4( 1.0, 0.0, 1.0, 1.0 ),  // magenta
+    vec4( 0.0, 1.0, 1.0, 1.0 ),  // cyan
+    vec4( 1.0, 1.0, 1.0, 1.0 ),  // white
+]; */
 
 var lightPosition = vec4(1.0, 1.0, 1.0, 0.0 );
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
@@ -46,7 +53,25 @@ var theta =[0, 0, 0];
 
 var thetaLoc;
 
-var flag = true;
+var near = 0.3;
+var far = 3.0;
+var radius = 4.0;
+var vtheta  = 0.0;
+var phi    = 0.0;
+var dr = 5.0 * Math.PI/180.0;
+var fovy = 45.0;  // Field-of-view in Y direction angle (in degrees)
+var aspect = 1.0;       // Viewport aspect ratio
+
+var modelViewMatrix, projectionMatrix;
+var modelViewMatrixLoc, projectionMatrixLoc;
+var eye;
+const at = vec3(0.0, 0.0, 0.0);
+const up = vec3(0.0, 1.0, 0.0);
+
+var turnLeft = false;
+var turnRight = false;
+var sTheta;
+var ptheta;
 
 function quad(a, b, c, d) {
 
@@ -56,15 +81,15 @@ function quad(a, b, c, d) {
      var normal = vec3(normal);
      normal = normalize(normal);
 
-     pointsArray.push(vertices[a]); 
+     pointsArray.push(vertices[a]);
      normalsArray.push(normal); 
-     pointsArray.push(vertices[b]); 
+     pointsArray.push(vertices[b]);	 
      normalsArray.push(normal); 
-     pointsArray.push(vertices[c]); 
+     pointsArray.push(vertices[c]);
      normalsArray.push(normal);   
-     pointsArray.push(vertices[a]);  
+     pointsArray.push(vertices[a]); 	 
      normalsArray.push(normal); 
-     pointsArray.push(vertices[c]); 
+     pointsArray.push(vertices[c]);	 
      normalsArray.push(normal); 
      pointsArray.push(vertices[d]); 
      normalsArray.push(normal);    
@@ -88,6 +113,7 @@ window.onload = function init() {
     gl = WebGLUtils.setupWebGL( canvas );
     if ( !gl ) { alert( "WebGL isn't available" ); }
     gl.viewport( 0, 0, canvas.width, canvas.height );
+	aspect =  canvas.width/canvas.height;
     gl.clearColor( 0.0, 0.0, 1.0, 1.0 );
     gl.enable(gl.DEPTH_TEST);
 	
@@ -117,6 +143,9 @@ window.onload = function init() {
     var vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
+	
+	modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
+    projectionMatrixLoc = gl.getUniformLocation( program, "projectionMatrix" );
 
     thetaLoc = gl.getUniformLocation(program, "theta"); 
     
@@ -145,6 +174,15 @@ window.onload = function init() {
     gl.uniformMatrix4fv( gl.getUniformLocation(program, "projectionMatrix"),
        false, flatten(projection));
     
+	// viewing parameters (eye must be at origin)
+	far = 3; //min 3 max 10 step 3.0 
+	near = 0.3; //min .01 max 3 step 0.1 < refine this to inside cube >
+	radius = 4; // min 0.05 max 10 step 0.1
+	vtheta = 0; // min -90 max 90 step 5
+	phi = 0; // min -90 max 90 step 5
+	aspect = 1; // min 0.5 max 2 step 0.1
+	fovy = 45; // min 10 max 120 step 5
+	
     render();
 }
 
@@ -168,7 +206,7 @@ function handleKeyUp(event) {
 	}
 }
 
-function rotatePlayer(){
+function rotateView(){
 	
 	if (turnLeft){
 		theta[axis] -= 2.0;
@@ -195,16 +233,22 @@ var render = function(){
             
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             
-	rotatePlayer();
+	rotateView();
 	
     modelView = mat4();
     modelView = mult(modelView, rotate(theta[xAxis], [1, 0, 0] ));
     modelView = mult(modelView, rotate(theta[yAxis], [0, 1, 0] ));
     modelView = mult(modelView, rotate(theta[zAxis], [0, 0, 1] ));
     
-    gl.uniformMatrix4fv( gl.getUniformLocation(program,
-            "modelViewMatrix"), false, flatten(modelView) );
+    gl.uniformMatrix4fv( gl.getUniformLocation(program, "modelViewMatrix"), false, flatten(modelView) );
+	//gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+    
+	eye = vec3(radius*Math.sin(vtheta)*Math.cos(phi), radius*Math.sin(vtheta)*Math.sin(phi), radius*Math.cos(vtheta));
+    modelViewMatrix = lookAt(eye, at , up);
+    projectionMatrix = perspective(fovy, aspect, near, far);
 
+    //gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projectionMatrix) );
+			
     gl.drawArrays( gl.TRIANGLES, 0, numVertices );
             
     requestAnimFrame(render);
