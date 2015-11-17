@@ -32,7 +32,7 @@ var vertices = [
     vec4( 1.0, 1.0, 1.0, 1.0 ),  // white
 ]; */
 
-var lightPosition = vec4(0.0, 0.0, 0.0, 0.0 );
+var lightPosition = vec4(0.0, 1.0, 0.0, 0.0 );
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
@@ -224,7 +224,7 @@ var render = function(){
     
     gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelView) );
  
-    projection = perspective(90, aspect, 0.1, 10);
+    projection = perspective(110, aspect, 0.1, 10);
 
     gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projection) );
 	
