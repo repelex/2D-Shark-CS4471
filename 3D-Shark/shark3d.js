@@ -54,7 +54,7 @@ var cage_bottom = [
     vec4( 1.0, 1.0, 1.0, 1.0 ),  // white
 ]; */
 
-var lightPosition = vec4(0.0, 1.0, 0.0, 0.0 );
+var lightPosition = vec4(-0.2, 0.3, 0.0, 0.0 );
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
@@ -238,6 +238,11 @@ var render = function(){
     
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
+	gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    gl.enable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST);
+    gl.uniform1f(program.alphaUniform, 0.5);
+	
     rotateView();
 
     modelView = lookAt(eye, at, up);
