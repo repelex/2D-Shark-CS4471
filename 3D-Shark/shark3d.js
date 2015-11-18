@@ -41,6 +41,13 @@ var cage_bottom = [
         vec4( 0.5,  -0.5, 0.5, 1.0 ),
         vec4( 0.5, -0.5, -0.5, 1.0 )
 	];
+	
+var shark = [
+		vec4( -0.3, -0.3, -0.6, 1.0 ),
+        vec4( -0.45,  0.45, -0.6, 1.0 ),
+        vec4( 0.45,  0.45, -0.6, 1.0 ),
+        vec4( 0.3, -0.3, -0.6, 1.0 )
+	];
 
 //color reference   
 /* var vertexColors = [
@@ -122,6 +129,10 @@ function colorCage(){
     quad( cage_bottom, 1, 0, 3, 2 );
 }
 
+function colorShark(){
+	quad(shark, 1, 0, 3, 2);
+}
+
 window.onload = function init() {
     
     canvas = document.getElementById( "gl-canvas" );
@@ -142,6 +153,7 @@ window.onload = function init() {
     gl.useProgram( program );
     
     colorCage();
+	colorShark();
    
     var nBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
@@ -241,7 +253,7 @@ var render = function(){
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     gl.enable(gl.BLEND);
     gl.disable(gl.DEPTH_TEST);
-    gl.uniform1f(program.alphaUniform, 0.5);
+    gl.uniform1f(program.alphaUniform, 0.9);
 	
     rotateView();
 
