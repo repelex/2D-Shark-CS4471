@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<title>Shark 3D</title>
+
+
+<script id="vertex-shader-ex" type="x-shader/x-vertex">
+
+attribute  vec4 vPosition;
+attribute  vec4 vColor;
+attribute  vec2 vTexCoord;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+varying vec4 fColor;
+varying vec2 fTexCoord;
+
+uniform vec3 theta;
+
+void main()
+{
+    // Compute the sines and cosines of theta for each of
+    //   the three axes in one computation.
+    vec3 pos = -(modelViewMatrix * vPosition).xyz;
+
+    fColor = vColor;
+    fTexCoord = vTexCoord;
+    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+}
+</script>
+
+<script id="fragment-shader-ex" type="x-shader/x-fragment">
+
+precision mediump float;
+
+varying vec2 fTexCoord;
+
+uniform sampler2D texture;
+
+void
+main()
+{   
+
+    //vec4 color = texture2D(texture, fTexCoord); if (vec3(color) == vec3(0,1,0)) gl_FragColor = vec4(color.r, color.g,color.b,0); else gl_FragColor = texture2D( texture, vec2(fTexCoord.s, fTexCoord.t));
+    vec4 color = texture2D(texture, fTexCoord); if (color.g > .9) gl_FragColor = vec4(color.r, color.g,color.b,0); else gl_FragColor = texture2D( texture, vec2(fTexCoord.s, fTexCoord.t));
+
+    //gl_FragColor = texture2D( texture, vec2(fTexCoord.s, fTexCoord.t));
+}
+</script>
+
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script type="text/javascript" src="initShaders.js"></script>
+<script type="text/javascript" src="MV.js"></script>
+<script type="text/javascript" src="shark3d - experimental.js"></script>
+</head>
+
+<body>
+<canvas id="gl-canvas" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<img id = "texImage" src = "texture.png" hidden></img>
+</body>
+</html>
