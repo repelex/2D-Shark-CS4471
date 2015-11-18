@@ -125,6 +125,8 @@ var far = 3.0;
 var fov = 110.0;  // Field-of-view in Y direction angle (in degrees)
 var aspect;
 
+var cageAlpha = 0.0;
+
 function configureTexture( image ) {
     texture = gl.createTexture();
     gl.bindTexture( gl.TEXTURE_2D, texture );
@@ -143,27 +145,53 @@ function configureTexture( image ) {
 
 function quad(a, b, c, d) {
      pointsArray.push(vertices[a]);
-     colorsArray.push(vertexColors[a]);
+     colorsArray.push(vertexColors[1]);
      texCoordsArray.push(texCoord[0]);
 
      pointsArray.push(vertices[b]);
-     colorsArray.push(vertexColors[a]);
+     colorsArray.push(vertexColors[1]);
      texCoordsArray.push(texCoord[1]);
 
      pointsArray.push(vertices[c]);
-     colorsArray.push(vertexColors[a]);
+     colorsArray.push(vertexColors[1]);
      texCoordsArray.push(texCoord[2]);
 
      pointsArray.push(vertices[a]);
-     colorsArray.push(vertexColors[a]);
+     colorsArray.push(vertexColors[1]);
      texCoordsArray.push(texCoord[0]);
 
      pointsArray.push(vertices[c]);
-     colorsArray.push(vertexColors[a]);
+     colorsArray.push(vertexColors[1]);
      texCoordsArray.push(texCoord[2]);
 
      pointsArray.push(vertices[d]);
-     colorsArray.push(vertexColors[a]);
+     colorsArray.push(vertexColors[1]);
+     texCoordsArray.push(texCoord[3]);
+}
+
+function quad2(a, b, c, d) {
+     pointsArray.push(vertices[a]);
+     colorsArray.push(vertexColors[5]);
+     texCoordsArray.push(texCoord[0]);
+
+     pointsArray.push(vertices[b]);
+     colorsArray.push(vertexColors[5]);
+     texCoordsArray.push(texCoord[1]);
+
+     pointsArray.push(vertices[c]);
+     colorsArray.push(vertexColors[5]);
+     texCoordsArray.push(texCoord[2]);
+
+     pointsArray.push(vertices[a]);
+     colorsArray.push(vertexColors[5]);
+     texCoordsArray.push(texCoord[0]);
+
+     pointsArray.push(vertices[c]);
+     colorsArray.push(vertexColors[5]);
+     texCoordsArray.push(texCoord[2]);
+
+     pointsArray.push(vertices[d]);
+     colorsArray.push(vertexColors[5]);
      texCoordsArray.push(texCoord[3]);
 }
 
@@ -178,6 +206,19 @@ function colorCage()
     quad( 4, 5, 6, 7 );
     
 }
+
+function colorCage2()
+{
+    quad2( 5, 4, 0, 1 );
+    quad2( 1, 0, 3, 2 );
+    quad2( 2, 3, 7, 6 );
+    quad2( 3, 0, 4, 7 );
+    quad2( 6, 5, 1, 2 );
+    quad2( 4, 5, 6, 7 );
+    
+}
+
+
 
 window.onload = function init() {
     
@@ -206,6 +247,8 @@ window.onload = function init() {
     gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(colorsArray), gl.STATIC_DRAW );
 
+    
+
     var vColor = gl.getAttribLocation( program, "vColor" );
     gl.vertexAttribPointer( vColor, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vColor );
@@ -228,7 +271,7 @@ window.onload = function init() {
 
     modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
     projectionMatrixLoc = gl.getUniformLocation( program, "projectionMatrix" );
-
+    vColorLoc = gl.getUniformLocation(program, "vColor");
     //
     // Initialize a texture
     //
@@ -245,7 +288,7 @@ window.onload = function init() {
     configureTexture( image );
 
     thetaLoc = gl.getUniformLocation(program, "theta");
-
+    gl.uniform4fv(vColorLoc, vec4(1,1,1,1));
     render();
 }
 
@@ -270,7 +313,7 @@ function handleKeyUp(event) {
 
     } else if (event.keyCode == 32) {
         // spacebar
-        alert(theta[axis]);
+
     } else if (event.keyCode == 13) {
         // reload game
         location.reload();

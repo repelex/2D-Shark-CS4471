@@ -20,8 +20,6 @@ uniform vec3 theta;
 
 void main()
 {
-    // Compute the sines and cosines of theta for each of
-    //   the three axes in one computation.
     vec3 pos = -(modelViewMatrix * vPosition).xyz;
 
     fColor = vColor;
@@ -35,17 +33,14 @@ void main()
 precision mediump float;
 
 varying vec2 fTexCoord;
+varying vec4 fColor;
 
 uniform sampler2D texture;
 
 void
 main()
 {   
-
-    //vec4 color = texture2D(texture, fTexCoord); if (vec3(color) == vec3(0,1,0)) gl_FragColor = vec4(color.r, color.g,color.b,0); else gl_FragColor = texture2D( texture, vec2(fTexCoord.s, fTexCoord.t));
-    vec4 color = texture2D(texture, fTexCoord); if (color.g > .9) gl_FragColor = vec4(color.r, color.g,color.b,0); else gl_FragColor = texture2D( texture, vec2(fTexCoord.s, fTexCoord.t));
-
-    //gl_FragColor = texture2D( texture, vec2(fTexCoord.s, fTexCoord.t));
+    gl_FragColor = fColor * texture2D( texture, vec2(fTexCoord.s, fTexCoord.t));
 }
 </script>
 
