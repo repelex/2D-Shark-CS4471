@@ -41,6 +41,35 @@ var cage_bottom = [
         vec4( 0.5,  -0.5, 0.5, 1.0 ),
         vec4( 0.5, -0.5, -0.5, 1.0 )
 	];
+	
+var shark = [
+		vec4( -0.3, -0.3, -0.6, 1.0 ),
+        vec4( -0.45,  0.45, -0.6, 1.0 ),
+        vec4( 0.45,  0.45, -0.6, 1.0 ),
+        vec4( 0.3, -0.3, -0.6, 1.0 )
+	];
+
+var sharkmouth = [
+		vec4( -0.1, -0.1, -0.6, 1.0 ),
+        vec4( -0.2,  0.2, -0.6, 1.0 ),
+        vec4( 0.2,  0.2, -0.6, 1.0 ),
+        vec4( 0.1, -0.1, -0.6, 1.0 )
+	];
+
+var sharkeye1 = [
+		vec4( -0.4, 0.4, -0.6, 1.0 ),
+        vec4( -0.35,  0.4, -0.6, 1.0 ),
+        vec4( -0.25,  0.4, -0.6, 1.0 ),
+        vec4( -0.35, 0.3, -0.6, 1.0 )
+	];
+	
+var sharkeye2 = [
+		vec4( 0.4, 0.4, -0.6, 1.0 ),
+        vec4( 0.35,  0.4, -0.6, 1.0 ),
+        vec4( 0.25,  0.4, -0.6, 1.0 ),
+        vec4( 0.35, 0.3, -0.6, 1.0 )
+	];
+
 
 //color reference   
 /* var vertexColors = [
@@ -54,7 +83,7 @@ var cage_bottom = [
     vec4( 1.0, 1.0, 1.0, 1.0 ),  // white
 ]; */
 
-var lightPosition = vec4(0.0, 1.0, 0.0, 0.0 );
+var lightPosition = vec4(-0.2, 0.3, 0.0, 0.0 );
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
@@ -122,6 +151,13 @@ function colorCage(){
     quad( cage_bottom, 1, 0, 3, 2 );
 }
 
+function colorShark(){
+	quad(shark, 1, 0, 3, 2);
+	quad(sharkmouth, 0, 1, 2, 3);
+	quad(sharkeye1, 0, 1, 2, 3);
+	quad(sharkeye2, 0, 1, 2, 3);
+}
+
 window.onload = function init() {
     
     canvas = document.getElementById( "gl-canvas" );
@@ -142,6 +178,7 @@ window.onload = function init() {
     gl.useProgram( program );
     
     colorCage();
+	colorShark();
    
     var nBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
@@ -238,6 +275,11 @@ var render = function(){
     
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
+	gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    gl.enable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST);
+    gl.uniform1f(program.alphaUniform, 0.9);
+	
     rotateView();
 
     modelView = lookAt(eye, at, up);
