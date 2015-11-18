@@ -6,9 +6,6 @@ var numVertices  = 36;
 var pointsArray = [];
 var normalsArray = [];
 
-var points = [];
-var colors = [];
-
 var vertices = [
         vec4( -0.5, -0.5,  0.5, 1.0 ),
         vec4( -0.5,  0.5,  0.5, 1.0 ),
@@ -32,12 +29,12 @@ var vertices = [
     vec4( 1.0, 1.0, 1.0, 1.0 ),  // white
 ]; */
 
-var lightPosition = vec4(0.0, 0.0, 0.0, 0.0 );
+var lightPosition = vec4(1.0, 1.0, 1.0, 0.0 );
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
 
-var materialAmbient = vec4( 1.0, 0.0, 1.0, 1.0 );
+var materialAmbient = vec4( 0.0, 1.0, 0.0, 1.0 );
 var materialDiffuse = vec4( 1.0, 0.8, 0.0, 1.0);
 var materialSpecular = vec4( 1.0, 0.8, 0.0, 1.0 );
 var materialShininess = 100.0;
@@ -45,6 +42,7 @@ var materialShininess = 100.0;
 var ctm;
 var ambientColor, diffuseColor, specularColor;
 var modelView, projection;
+var viewerPos;
 var program;
 
 var xAxis = 0;
@@ -53,25 +51,29 @@ var zAxis = 2;
 var axis = 0;
 var theta =[0, 0, 0];
 
+var thetaLoc;
+
+var near = 0.3;
+var far = 3.0;
+var radius = 4.0;
+var vtheta  = 0.0;
+var phi    = 0.0;
+var dr = 5.0 * Math.PI/180.0;
+var fovy = 45.0;  // Field-of-view in Y direction angle (in degrees)
+var aspect = 1.0;       // Viewport aspect ratio
+
+var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
+var eye;
+const at = vec3(0.0, 0.0, 0.0);
+const up = vec3(0.0, 1.0, 0.0);
 
 var turnLeft = false;
 var turnRight = false;
 var sTheta;
 var ptheta;
 
-
-const eye = vec3(0.0, 0.0, 0.0);
-const up = vec3(0.0, 1.0, 0.0);
-
-var near = 0.3;
-var far = 3.0;
-
-
-var  fovy = 45.0;  // Field-of-view in Y direction angle (in degrees)
-var  aspect = 1.0;
-
-function quad(a, b, c, d) {
+function quad(a, b, c, d){
 
      var t1 = subtract(vertices[b], vertices[a]);
      var t2 = subtract(vertices[c], vertices[b]);
@@ -102,7 +104,7 @@ function colorCube(){
     quad( 5, 4, 0, 1 );
 }
 
-window.onload = function init() {
+window.onload = function init(){
 	
     canvas = document.getElementById( "gl-canvas" );
     
@@ -117,12 +119,12 @@ window.onload = function init() {
 	//event listeners
 	document.onkeyup = handleKeyUp;
 	
-    // Load shaders and initialize attribute buffers
+    //load shaders and initialize attribute buffers
     program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
     
     colorCube();
-   
+
     var nBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW );
@@ -142,6 +144,10 @@ window.onload = function init() {
 	modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
     projectionMatrixLoc = gl.getUniformLocation( program, "projectionMatrix" );
 
+    thetaLoc = gl.getUniformLocation(program, "theta"); 
+    
+    viewerPos = vec3(0.0, 0.0, -20.0 );
+
     projection = ortho(-1, 1, -1, 1, -100, 100);
     
     ambientProduct = mult(lightAmbient, materialAmbient);
@@ -149,7 +155,7 @@ window.onload = function init() {
     specularProduct = mult(lightSpecular, materialSpecular);
 	
 	axis = yAxis; //or xAxis, zAxis
-    
+ 
     gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"),
        flatten(ambientProduct));
     gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"),
@@ -159,10 +165,21 @@ window.onload = function init() {
     gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), 
        flatten(lightPosition) );
        
-    gl.uniform1f(gl.getUniformLocation(program, "shininess"),materialShininess);
+    gl.uniform1f(gl.getUniformLocation(program, 
+       "shininess"),materialShininess);
     
-    gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projection));
+    gl.uniformMatrix4fv( gl.getUniformLocation(program, "projectionMatrix"),
+       false, flatten(projection));
     
+	// viewing parameters (eye must be at origin)
+	far = 3; //min 3 max 10 step 3.0 
+	near = 0.3; //min .01 max 3 step 0.1 < refine this to inside cube? >
+	radius = 4; // min 0.05 max 10 step 0.1
+	vtheta = 0; // min -90 max 90 step 5
+	phi = 0; // min -90 max 90 step 5
+	aspect = 1; // min 0.5 max 2 step 0.1
+	fovy = 45; // min 10 max 120 step 5
+	
     render();
 }
 
@@ -210,25 +227,26 @@ function rotateView(){
 }
 
 var render = function(){
-	
+            
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	
+            
 	rotateView();
-
-    modelView = lookAt(eye, vec3(0.0, 0.0, 0.0) , up);
 	
- 
+    modelView = mat4();
     modelView = mult(modelView, rotate(theta[xAxis], [1, 0, 0] ));
     modelView = mult(modelView, rotate(theta[yAxis], [0, 1, 0] ));
     modelView = mult(modelView, rotate(theta[zAxis], [0, 0, 1] ));
     
-    gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelView) );
- 
-    projection = perspective(90, aspect, 0.1, 10);
+    gl.uniformMatrix4fv( gl.getUniformLocation(program, "modelViewMatrix"), false, flatten(modelView) );
+	//gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+    
+	eye = vec3(radius*Math.sin(vtheta)*Math.cos(phi), radius*Math.sin(vtheta)*Math.sin(phi), radius*Math.cos(vtheta));
+    modelViewMatrix = lookAt(eye, at , up);
+    projectionMatrix = perspective(fovy, aspect, near, far);
 
-    gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projection) );
-	
+    //gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projectionMatrix) );
+			
     gl.drawArrays( gl.TRIANGLES, 0, numVertices );
-	
+            
     requestAnimFrame(render);
 }
