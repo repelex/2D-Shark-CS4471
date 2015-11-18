@@ -1,24 +1,46 @@
 var canvas;
 var gl;
 
-var numVertices  = 36;
-
 var pointsArray = [];
 var normalsArray = [];
 
-var points = [];
-var colors = [];
-
-var vertices = [
+// shark cage walls
+var cage_south = [
         vec4( -0.5, -0.5,  0.5, 1.0 ),
         vec4( -0.5,  0.5,  0.5, 1.0 ),
         vec4( 0.5,  0.5,  0.5, 1.0 ),
-        vec4( 0.5, -0.5,  0.5, 1.0 ),
-        vec4( -0.5, -0.5, -0.5, 1.0 ),
+        vec4( 0.5, -0.5,  0.5, 1.0 )
+	];
+var cage_north = [
+		vec4( -0.5, -0.5, -0.5, 1.0 ),
         vec4( -0.5,  0.5, -0.5, 1.0 ),
         vec4( 0.5,  0.5, -0.5, 1.0 ),
         vec4( 0.5, -0.5, -0.5, 1.0 )
-    ];
+	];
+var cage_east = [
+		vec4( 0.5, -0.5, -0.5, 1.0 ),
+        vec4( 0.5,  0.5, -0.5, 1.0 ),
+        vec4( 0.5,  0.5, 0.5, 1.0 ),
+        vec4( 0.5, -0.5, 0.5, 1.0 )
+	];
+var cage_west = [
+		vec4( -0.5, -0.5, 0.5, 1.0 ),
+        vec4( -0.5,  0.5, 0.5, 1.0 ),
+        vec4( -0.5,  0.5, -0.5, 1.0 ),
+        vec4( -0.5, -0.5, -0.5, 1.0 )
+	];
+var cage_top = [
+		vec4( -0.5, 0.5, -0.5, 1.0 ),
+        vec4( -0.5,  0.5, 0.5, 1.0 ),
+        vec4( 0.5,  0.5, 0.5, 1.0 ),
+        vec4( 0.5, 0.5, -0.5, 1.0 )
+	];
+var cage_bottom = [
+		vec4( -0.5, -0.5, -0.5, 1.0 ),
+        vec4( -0.5, -0.5, 0.5, 1.0 ),
+        vec4( 0.5,  -0.5, 0.5, 1.0 ),
+        vec4( 0.5, -0.5, -0.5, 1.0 )
+	];
 
 //color reference   
 /* var vertexColors = [
@@ -37,7 +59,7 @@ var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
 
-var materialAmbient = vec4( 1.0, 0.0, 1.0, 1.0 );
+var materialAmbient = vec4( 0.0, 1.0, 0.0, 1.0 );
 var materialDiffuse = vec4( 1.0, 0.8, 0.0, 1.0);
 var materialSpecular = vec4( 1.0, 0.8, 0.0, 1.0 );
 var materialShininess = 100.0;
@@ -57,52 +79,47 @@ var modelViewMatrixLoc, projectionMatrixLoc;
 
 var turnLeft = false;
 var turnRight = false;
-var sTheta;
-var ptheta;
-
 var turning = false;
 var turnRate = 2.0;
 var degToTurn;
 
 const eye = vec3(0.0, 0.0, 0.0);
+const at = vec3(0.0, 0.0, 0.0);
 const up = vec3(0.0, 1.0, 0.0);
-
 var near = 0.3;
 var far = 3.0;
-
-
 var fov = 110.0;  // Field-of-view in Y direction angle (in degrees)
 var aspect;
 
-function quad(a, b, c, d) {
+function quad(v, a, b, c, d) {
 
-     var t1 = subtract(vertices[b], vertices[a]);
-     var t2 = subtract(vertices[c], vertices[b]);
+     var t1 = subtract(v[b], v[a]);
+     var t2 = subtract(v[c], v[b]);
      var normal = cross(t1, t2);
      var normal = vec3(normal);
      normal = normalize(normal);
 
-     pointsArray.push(vertices[a]);
+     pointsArray.push(v[a]);
      normalsArray.push(normal); 
-     pointsArray.push(vertices[b]);  
+     pointsArray.push(v[b]);  
      normalsArray.push(normal); 
-     pointsArray.push(vertices[c]);
+     pointsArray.push(v[c]);
      normalsArray.push(normal);   
-     pointsArray.push(vertices[a]);      
+     pointsArray.push(v[a]);      
      normalsArray.push(normal); 
-     pointsArray.push(vertices[c]);  
+     pointsArray.push(v[c]);  
      normalsArray.push(normal); 
-     pointsArray.push(vertices[d]); 
+     pointsArray.push(v[d]); 
      normalsArray.push(normal);    
 }
 
-function colorCube(){
-    quad( 1, 0, 3, 2 );
-    quad( 2, 3, 7, 6 );
-    quad( 3, 0, 4, 7 );
-    quad( 6, 5, 1, 2 );
-    quad( 4, 5, 6, 7 );
-    quad( 5, 4, 0, 1 );
+function colorCage(){
+    quad( cage_south, 1, 0, 3, 2 );
+    quad( cage_north, 0, 1, 2, 3 );
+    quad( cage_east, 0, 1, 2, 3 );
+    quad( cage_west, 0, 1, 2, 3);
+    quad( cage_top, 1, 0, 3, 2 );
+    quad( cage_bottom, 1, 0, 3, 2 );
 }
 
 window.onload = function init() {
@@ -124,7 +141,7 @@ window.onload = function init() {
     program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
     
-    colorCube();
+    colorCage();
    
     var nBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
@@ -173,7 +190,6 @@ function handleKeyUp(event) {
     
     if (event.keyCode == 37 || event.keyCode ==  65) {
         // left arrow key or A
-        // sTheta = ptheta;
         if (!turning){
             turnRight = false;
             turnLeft = true;
@@ -182,7 +198,6 @@ function handleKeyUp(event) {
         }
     } else if (event.keyCode == 39 || event.keyCode == 68) {
         // right arrow key or D
-        // sTheta = ptheta;
         if (!turning){
             turnLeft = false;
             turnRight = true;
@@ -225,7 +240,7 @@ var render = function(){
     
     rotateView();
 
-    modelView = lookAt(eye, vec3(0.0, 0.0, 0.0), up);
+    modelView = lookAt(eye, at, up);
     modelView = mult(modelView, rotate(theta[xAxis], [1, 0, 0] ));
     modelView = mult(modelView, rotate(theta[yAxis], [0, 1, 0] ));
     modelView = mult(modelView, rotate(theta[zAxis], [0, 0, 1] ));
@@ -236,7 +251,8 @@ var render = function(){
 
     gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projection) );
     
-    gl.drawArrays( gl.TRIANGLES, 0, numVertices );
+    gl.drawArrays( gl.TRIANGLES, 0, pointsArray.length);
     
     requestAnimFrame(render);
+	
 }
