@@ -60,6 +60,9 @@ var turnRight = false;
 var sTheta;
 var ptheta;
 
+var turning = false;
+var turnRate = 2.0;
+var degToTurn;
 
 const eye = vec3(0.0, 0.0, 0.0);
 const up = vec3(0.0, 1.0, 0.0);
@@ -162,7 +165,7 @@ window.onload = function init() {
     gl.uniform1f(gl.getUniformLocation(program, "shininess"),materialShininess);
     
     gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projection));
-    
+
     render();
 }
 
@@ -171,15 +174,25 @@ function handleKeyUp(event) {
     if (event.keyCode == 37 || event.keyCode ==  65) {
         // left arrow key or A
         // sTheta = ptheta;
-        turnRight = false;
-        turnLeft = true;
+        if (!turning){
+            turnRight = false;
+            turnLeft = true;
+            degToTurn = 90;
+            turning = true;
+        }
     } else if (event.keyCode == 39 || event.keyCode == 68) {
         // right arrow key or D
         // sTheta = ptheta;
-        turnLeft = false;
-        turnRight = true;
+        if (!turning){
+            turnLeft = false;
+            turnRight = true;
+            degToTurn = 90;
+            turning = true;
+        }
+
     } else if (event.keyCode == 32) {
         // spacebar
+        alert(theta[axis]);
     } else if (event.keyCode == 13) {
         // reload game
         location.reload();
@@ -189,23 +202,20 @@ function handleKeyUp(event) {
 function rotateView(){
     
     if (turnLeft){
-        theta[axis] -= 2.0;
-        /* if (ptheta - sTheta < Math.PI/2)
-            ptheta += Math.PI/10
-        else {
-            turnLeft = false;
-            ptheta = ptheta%(Math.PI*2);
-        } */
+        theta[axis] -= turnRate;
+        degToTurn -= turnRate;
+        if (degToTurn == 0) {
+            turnLeft=false;
+            turning = false;
+        }
     }
     if (turnRight){
-        theta[axis] += 2.0;
-        /* if (-1*(ptheta - sTheta) < Math.PI/2)
-            ptheta -= Math.PI/10
-        else {
-            turnRight = false;
-            ptheta += 2*Math.PI;
-            ptheta = ptheta%(Math.PI*2);
-        } */
+        theta[axis] += turnRate;
+        degToTurn -= turnRate;
+        if (degToTurn == 0){ 
+            turnRight=false;
+            turning = false;
+        }
     }
 }
 
@@ -215,9 +225,7 @@ var render = function(){
     
     rotateView();
 
-    modelView = lookAt(eye, vec3(0.0, 0.0, 0.0) , up);
-    
- 
+    modelView = lookAt(eye, vec3(0.0, 0.0, 0.0), up);
     modelView = mult(modelView, rotate(theta[xAxis], [1, 0, 0] ));
     modelView = mult(modelView, rotate(theta[yAxis], [0, 1, 0] ));
     modelView = mult(modelView, rotate(theta[zAxis], [0, 0, 1] ));
