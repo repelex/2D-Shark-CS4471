@@ -1,0 +1,42 @@
+.container {
+    position: relative;
+}
+#overlay {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    color: white;
+    font-family: monospace;
+    padding: 1em;
+    text-shadow: 0px 0px 5px white;
+}
+#endgame {
+    position: absolute;
+    left: 65px;
+    top: 320px;
+    color: white;
+	font-size: 150%;
+    font-family: monospace;
+    padding: 1em;
+    border-radius: 1em;
+    text-shadow: 0px 0px 5px white;
+}
+#controls {
+    position: absolute;
+    left: 35px;
+    bottom: 10px;
+    color: white;
+    font-family: monospace;
+    padding: 1em;
+    text-shadow: 0px 0px 5px white;
+}
+canvas {
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    outline: none;
+	-webkit-tap-highlight-color: rgba(255, 255, 255, 0); /* mobile webkit */
+}

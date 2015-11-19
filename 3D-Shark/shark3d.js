@@ -1,70 +1,6 @@
 var canvas;
 var gl;
 
-// shark cage walls
-var cage_south = [
-        vec4( -0.5, -0.5,  0.5, 1.0 ),
-        vec4( -0.5,  0.5,  0.5, 1.0 ),
-        vec4( 0.5,  0.5,  0.5, 1.0 ),
-        vec4( 0.5, -0.5,  0.5, 1.0 )
-	];
-var cage_north = [
-		vec4( -0.5, -0.5, -0.5, 1.0 ),
-        vec4( -0.5,  0.5, -0.5, 1.0 ),
-        vec4( 0.5,  0.5, -0.5, 1.0 ),
-        vec4( 0.5, -0.5, -0.5, 1.0 )
-	];
-var cage_east = [
-		vec4( 0.5, -0.5, -0.5, 1.0 ),
-        vec4( 0.5,  0.5, -0.5, 1.0 ),
-        vec4( 0.5,  0.5, 0.5, 1.0 ),
-        vec4( 0.5, -0.5, 0.5, 1.0 )
-	];
-var cage_west = [
-		vec4( -0.5, -0.5, 0.5, 1.0 ),
-        vec4( -0.5,  0.5, 0.5, 1.0 ),
-        vec4( -0.5,  0.5, -0.5, 1.0 ),
-        vec4( -0.5, -0.5, -0.5, 1.0 )
-	];
-var cage_top = [
-		vec4( -0.5, 0.5, -0.5, 1.0 ),
-        vec4( -0.5,  0.5, 0.5, 1.0 ),
-        vec4( 0.5,  0.5, 0.5, 1.0 ),
-        vec4( 0.5, 0.5, -0.5, 1.0 )
-	];
-var cage_bottom = [
-		vec4( -0.5, -0.5, -0.5, 1.0 ),
-        vec4( -0.5, -0.5, 0.5, 1.0 ),
-        vec4( 0.5,  -0.5, 0.5, 1.0 ),
-        vec4( 0.5, -0.5, -0.5, 1.0 )
-	];
-
-// shark 
-var shark = [
-		vec4( -0.3, -0.3, -0.6, 1.0 ),
-        vec4( -0.45,  0.45, -0.6, 1.0 ),
-        vec4( 0.45,  0.45, -0.6, 1.0 ),
-        vec4( 0.3, -0.3, -0.6, 1.0 )
-	];
-var sharkmouth = [
-		vec4( -0.1, -0.1, -0.6, 1.0 ),
-        vec4( -0.2,  0.2, -0.6, 1.0 ),
-        vec4( 0.2,  0.2, -0.6, 1.0 ),
-        vec4( 0.1, -0.1, -0.6, 1.0 )
-	];
-var sharkeye1 = [
-		vec4( -0.4, 0.4, -0.6, 1.0 ),
-        vec4( -0.35,  0.4, -0.6, 1.0 ),
-        vec4( -0.25,  0.4, -0.6, 1.0 ),
-        vec4( -0.35, 0.3, -0.6, 1.0 )
-	];
-var sharkeye2 = [
-		vec4( 0.4, 0.4, -0.6, 1.0 ),
-        vec4( 0.35,  0.4, -0.6, 1.0 ),
-        vec4( 0.25,  0.4, -0.6, 1.0 ),
-        vec4( 0.35, 0.3, -0.6, 1.0 )
-	];
-
 //color reference   
 /* var vertexColors = [
     vec4( 0.0, 0.0, 0.0, 1.0 ),  // black
@@ -145,116 +81,17 @@ var shark_normalsArray = [];
 var pointsArray = [];
 var normalsArray = [];
 
-function quad(v, a, b, c, d, nA, pA) {
+// text variables
+var northNode;
+var southNode;
+var eastNode;
+var westNode;
+var topNode;
+var bottomNode;
+var sharkNode;
+var endNode;
 
-     var t1 = subtract(v[b], v[a]);
-     var t2 = subtract(v[c], v[b]);
-     var normal = cross(t1, t2);
-     var normal = vec3(normal);
-     normal = normalize(normal);
-
-     pA.push(v[a]);
-     nA.push(normal); 
-     pA.push(v[b]);  
-     nA.push(normal); 
-     pA.push(v[c]);
-     nA.push(normal);   
-     pA.push(v[a]);      
-     nA.push(normal); 
-     pA.push(v[c]);  
-     nA.push(normal); 
-     pA.push(v[d]); 
-     nA.push(normal);    
-}
-
-function colorCage(){
-    /* quad( cage_south, 1, 0, 3, 2, cs_normalsArray, cs_pointsArray );
-    quad( cage_north, 0, 1, 2, 3, cn_normalsArray, cn_pointsArray );
-    quad( cage_east, 0, 1, 2, 3, ce_normalsArray, ce_pointsArray );
-    quad( cage_west, 0, 1, 2, 3, cw_normalsArray, cw_pointsArray);
-    quad( cage_top, 1, 0, 3, 2, ct_normalsArray, ct_pointsArray );
-    quad( cage_bottom, 1, 0, 3, 2, cb_normalsArray, cb_pointsArray ); */
-	
-	//cage south
-	for (i = 0; i < 10; i++){
-		if ((i%2 > 0)||(i==0)){
-		quad([	vec4( 0.4 - (i*0.1), -0.5,  0.5, 1.0 ),
-				vec4( 0.4 - (i*0.1),  0.5,  0.5, 1.0 ),
-				vec4( 0.5 - (i*0.1), 0.5,  0.5, 1.0 ),
-				vec4( 0.5 - (i*0.1), -0.5,  0.5, 1.0 )],
-				1, 0, 3, 2, normalsArray, pointsArray);
-		}
-	}
-	
-	//cage east
-	for (i = 0; i < 10; i++){
-		if ((i%2 > 0)||(i==0)){
-		quad([	vec4( 0.5, -0.5, -0.5 + (i*0.1), 1.0 ),
-				vec4( 0.5,  0.5, -0.5 + (i*0.1), 1.0 ),
-				vec4( 0.5,  0.5, -0.4 + (i*0.1), 1.0 ),
-				vec4( 0.5, -0.5, -0.4 + (i*0.1), 1.0 )],
-				0, 1, 2, 3, normalsArray, pointsArray);
-		}
-	}
-	
-	//cage west
-	for (i = 0; i < 10; i++){
-		if ((i%2 > 0)||(i==0)){
-		quad([	vec4( -0.5, -0.5, 0.5 - (i*0.1), 1.0 ),
-				vec4( -0.5,  0.5, 0.5 - (i*0.1), 1.0 ),
-				vec4( -0.5,  0.5, 0.4 - (i*0.1), 1.0 ),
-				vec4( -0.5, -0.5, 0.4 - (i*0.1), 1.0 )],
-				0, 1, 2, 3, normalsArray, pointsArray);
-		}
-	}
-	
-	//cage top
-	for (i = 0; i < 10; i++){
-		if ((i%2 > 0)||(i==0)){
-		quad([	vec4( -0.5, 0.5, 0.4- (i*0.1), 1.0 ),
-				vec4( -0.5, 0.5, 0.5 - (i*0.1), 1.0 ),
-				vec4( 0.5,  0.5, 0.5 - (i*0.1), 1.0 ),
-				vec4( 0.5, 0.5, 0.4 - (i*0.1), 1.0 )],
-				1, 0, 3, 2, normalsArray, pointsArray);
-		}
-	}
-	
-	//cage bottom
-	for (i = 0; i < 10; i++){
-		if ((i%2 > 0)||(i==0)){
-		quad([	vec4( -0.5, -0.5, -0.5 + (i*0.1), 1.0 ),
-				vec4( -0.5, -0.5, -0.4 + (i*0.1), 1.0 ),
-				vec4( 0.5,  -0.5, -0.4 + (i*0.1), 1.0 ),
-				vec4( 0.5, -0.5, -0.5 + (i*0.1), 1.0 )],
-				1, 0, 3, 2, normalsArray, pointsArray);
-		}
-	}
-	
-	//cage north
-	for (i = 0; i < 10; i++){
-		if ((i%2 > 0)||(i==0)){
-		quad([	vec4( -0.5 + (i*0.1), -0.5, -0.5, 1.0 ),
-				vec4( -0.5 + (i*0.1),  0.5, -0.5, 1.0 ),
-				vec4( -0.4 + (i*0.1),  0.5, -0.5, 1.0 ),
-				vec4( -0.4 + (i*0.1), -0.5, -0.5, 1.0 )], 
-				0, 1, 2, 3, normalsArray, pointsArray);
-		}
-	}
-	
-	//quad( cage_north, 0, 1, 2, 3, normalsArray, pointsArray );
-	//quad( cage_south, 1, 0, 3, 2, normalsArray, pointsArray );
-    //quad( cage_east, 0, 1, 2, 3, normalsArray, pointsArray );
-    //quad( cage_west, 0, 1, 2, 3, normalsArray, pointsArray);
-    //quad( cage_top, 1, 0, 3, 2, normalsArray, pointsArray );
-    //quad( cage_bottom, 1, 0, 3, 2, normalsArray, pointsArray );
-}
-
-function colorShark(){
-	quad(shark, 1, 0, 3, 2, normalsArray, pointsArray);
-	quad(sharkmouth, 0, 1, 2, 3, normalsArray, pointsArray);
-	quad(sharkeye1, 0, 1, 2, 3, normalsArray, pointsArray);
-	quad(sharkeye2, 0, 1, 2, 3, normalsArray, pointsArray);
-}
+var playerDead = false;
 
 window.onload = function init() {
     
@@ -275,10 +112,9 @@ window.onload = function init() {
     program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
     
-	initVariables();
+	initText();
 	colorShark(); 
     colorCage();
-	
 	
     var nBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
@@ -319,58 +155,19 @@ window.onload = function init() {
     render();
 }
 
-function handleKeyUp(event) {
-    
-    if (event.keyCode == 37 || event.keyCode ==  65) {
-        // left arrow key or A
-        if (!turning){
-            turnRight = false;
-            turnLeft = true;
-            degToTurn = 90;
-            turning = true;
-        }
-    } else if (event.keyCode == 39 || event.keyCode == 68) {
-        // right arrow key or D
-        if (!turning){
-            turnLeft = false;
-            turnRight = true;
-            degToTurn = 90;
-            turning = true;
-        }
-
-    } else if (event.keyCode == 32) {
-        // spacebar
-        normalsArray.pop();
-		pointsArray.pop();
-    } else if (event.keyCode == 13) {
-        // reload game
-        location.reload();
-    }
-}
-
-function rotateView(){
-    
-    if (turnLeft){
-        theta[axis] -= turnRate;
-        degToTurn -= turnRate;
-        if (degToTurn == 0) {
-            turnLeft=false;
-            turning = false;
-        }
-    }
-    if (turnRight){
-        theta[axis] += turnRate;
-        degToTurn -= turnRate;
-        if (degToTurn == 0){ 
-            turnRight=false;
-            turning = false;
-        }
-    }
-}
-
-var render = function(){
+function render(){
     
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	
+	// draw and update text
+	northNode.nodeValue = ((c_northStr/c_maxStr)*100).toFixed(0) + "%";
+	southNode.nodeValue = ((c_southStr/c_maxStr)*100).toFixed(0) + "%";
+	eastNode.nodeValue = ((c_eastStr/c_maxStr)*100).toFixed(0) + "%";
+	westNode.nodeValue = ((c_westStr/c_maxStr)*100).toFixed(0) + "%";
+	topNode.nodeValue = ((c_topStr/c_maxStr)*100).toFixed(0) + "%";
+	bottomNode.nodeValue = ((c_bottomStr/c_maxStr)*100).toFixed(0) + "%";
+	sharkNode.nodeValue = sharkCount;
+	endNode.nodeValue = "";
     
 	/* gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     gl.enable(gl.BLEND);
@@ -413,10 +210,236 @@ var render = function(){
 	
 	gl.drawArrays( gl.TRIANGLES, 0, pointsArray.length);
 	
+	if (sharkCount < 1){
+		endNode.nodeValue = "YOU WIN! PRESS [ENTER] TO RETRY.";
+	}
+	
+	if (playerDead){
+		endNode.nodeValue = "YOU LOSE! PRESS [ENTER] TO RETRY.";
+	}
+	
     requestAnimFrame(render);
 }
 
-function initVariables(){
+function quad(v, a, b, c, d, nA, pA) {
+
+     var t1 = subtract(v[b], v[a]);
+     var t2 = subtract(v[c], v[b]);
+     var normal = cross(t1, t2);
+     var normal = vec3(normal);
+     normal = normalize(normal);
+
+     pA.push(v[a]);
+     nA.push(normal); 
+     pA.push(v[b]);  
+     nA.push(normal); 
+     pA.push(v[c]);
+     nA.push(normal);   
+     pA.push(v[a]);      
+     nA.push(normal); 
+     pA.push(v[c]);  
+     nA.push(normal); 
+     pA.push(v[d]); 
+     nA.push(normal);    
+}
+
+function colorCage(){
+	//cage south
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( 0.4 - (i*0.1), -0.5,  0.5, 1.0 ),
+				vec4( 0.4 - (i*0.1),  0.5,  0.5, 1.0 ),
+				vec4( 0.5 - (i*0.1), 0.5,  0.5, 1.0 ),
+				vec4( 0.5 - (i*0.1), -0.5,  0.5, 1.0 )],
+				1, 0, 3, 2, normalsArray, pointsArray); //cs_normalsArray, cs_pointsArray
+		}
+	}
+	
+	//cage east
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( 0.5, -0.5, -0.5 + (i*0.1), 1.0 ),
+				vec4( 0.5,  0.5, -0.5 + (i*0.1), 1.0 ),
+				vec4( 0.5,  0.5, -0.4 + (i*0.1), 1.0 ),
+				vec4( 0.5, -0.5, -0.4 + (i*0.1), 1.0 )],
+				0, 1, 2, 3, normalsArray, pointsArray); //ce_normalsArray, ce_pointsArray
+		}
+	}
+	
+	//cage west
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( -0.5, -0.5, 0.5 - (i*0.1), 1.0 ),
+				vec4( -0.5,  0.5, 0.5 - (i*0.1), 1.0 ),
+				vec4( -0.5,  0.5, 0.4 - (i*0.1), 1.0 ),
+				vec4( -0.5, -0.5, 0.4 - (i*0.1), 1.0 )],
+				0, 1, 2, 3, normalsArray, pointsArray); //cw_normalsArray, cw_pointsArray
+		}
+	}
+	
+	//cage top
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( -0.5, 0.5, 0.4- (i*0.1), 1.0 ),
+				vec4( -0.5, 0.5, 0.5 - (i*0.1), 1.0 ),
+				vec4( 0.5,  0.5, 0.5 - (i*0.1), 1.0 ),
+				vec4( 0.5, 0.5, 0.4 - (i*0.1), 1.0 )],
+				1, 0, 3, 2, normalsArray, pointsArray); //ct_normalsArray, ct_pointsArray
+		}
+	}
+	
+	//cage bottom
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( -0.5, -0.5, -0.5 + (i*0.1), 1.0 ),
+				vec4( -0.5, -0.5, -0.4 + (i*0.1), 1.0 ),
+				vec4( 0.5,  -0.5, -0.4 + (i*0.1), 1.0 ),
+				vec4( 0.5, -0.5, -0.5 + (i*0.1), 1.0 )],
+				1, 0, 3, 2, normalsArray, pointsArray); //cb_normalsArray, cb_pointsArray
+		}
+	}
+	
+	//cage north
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( -0.5 + (i*0.1), -0.5, -0.5, 1.0 ),
+				vec4( -0.5 + (i*0.1),  0.5, -0.5, 1.0 ),
+				vec4( -0.4 + (i*0.1),  0.5, -0.5, 1.0 ),
+				vec4( -0.4 + (i*0.1), -0.5, -0.5, 1.0 )], 
+				0, 1, 2, 3, normalsArray, pointsArray); //cn_normalsArray, cn_pointsArray
+		}
+	}
+}
+
+function colorShark(){
+	
+	var shark = [
+		vec4( -0.3, -0.3, -0.6, 1.0 ),
+        vec4( -0.45,  0.45, -0.6, 1.0 ),
+        vec4( 0.45,  0.45, -0.6, 1.0 ),
+        vec4( 0.3, -0.3, -0.6, 1.0 )
+	];
+	var sharkmouth = [
+		vec4( -0.1, -0.1, -0.6, 1.0 ),
+        vec4( -0.2,  0.2, -0.6, 1.0 ),
+        vec4( 0.2,  0.2, -0.6, 1.0 ),
+        vec4( 0.1, -0.1, -0.6, 1.0 )
+	];
+	var sharkeye1 = [
+		vec4( -0.4, 0.4, -0.6, 1.0 ),
+        vec4( -0.35,  0.4, -0.6, 1.0 ),
+        vec4( -0.25,  0.4, -0.6, 1.0 ),
+        vec4( -0.35, 0.3, -0.6, 1.0 )
+	];
+	var sharkeye2 = [
+		vec4( 0.4, 0.4, -0.6, 1.0 ),
+        vec4( 0.35,  0.4, -0.6, 1.0 ),
+        vec4( 0.25,  0.4, -0.6, 1.0 ),
+        vec4( 0.35, 0.3, -0.6, 1.0 )
+	];
+	
+	quad(shark, 1, 0, 3, 2, normalsArray, pointsArray); //shark_normalsArray, shark_pointsArray
+	quad(sharkmouth, 0, 1, 2, 3, normalsArray, pointsArray);
+	quad(sharkeye1, 0, 1, 2, 3, normalsArray, pointsArray);
+	quad(sharkeye2, 0, 1, 2, 3, normalsArray, pointsArray);
+}
+
+function handleKeyUp(event) {
+	
+	if (event.keyCode == 37 || event.keyCode ==  65) {
+        // left arrow key or A
+		axis = yAxis;
+        if (!turning){
+            turnRight = false;
+            turnLeft = true;
+            degToTurn = 90;
+            turning = true;
+        }
+    } else if (event.keyCode == 39 || event.keyCode == 68) {
+        // right arrow key or D
+		axis = yAxis;
+        if (!turning){
+            turnLeft = false;
+            turnRight = true;
+            degToTurn = 90;
+            turning = true;
+        }
+    } else if (event.keyCode == 38 || event.keyCode == 87) {
+        // up key or W
+		axis = xAxis;
+		if (!turning){
+            turnLeft = false;
+            turnRight = true;
+            degToTurn = 90;
+            turning = true;
+        }
+    } else if (event.keyCode == 40 || event.keyCode == 83) {
+        // down key or S
+		axis = xAxis;
+        if (!turning){
+            turnLeft = false;
+            turnRight = true;
+            degToTurn = 90;
+            turning = true;
+        }
+    } else if (event.keyCode == 32) {
+        // spacebar
+        normalsArray.pop();
+		pointsArray.pop();
+    } else if (event.keyCode == 13) {
+        // reload game
+        location.reload();
+    }
+}
+
+function rotateView(){
+    if (turnLeft){
+        theta[axis] -= turnRate;
+        degToTurn -= turnRate;
+        if (degToTurn == 0) {
+            turnLeft=false;
+            turning = false;
+        }
+    }
+    if (turnRight){
+        theta[axis] += turnRate;
+        degToTurn -= turnRate;
+        if (degToTurn == 0){ 
+            turnRight=false;
+            turning = false;
+        }
+    }
+}
+
+function initText(){
+	
+	var northElement = document.getElementById("north");
+	var southElement = document.getElementById("south");
+	var eastElement = document.getElementById("east");
+	var westElement = document.getElementById("west");
+	var topElement = document.getElementById("top");
+	var bottomElement = document.getElementById("bottom");
+	var sharkElement = document.getElementById("shark");
+	var endElement = document.getElementById("end");
+	
+	northNode= document.createTextNode("");
+	southNode = document.createTextNode("");
+	eastNode = document.createTextNode("");
+	westNode = document.createTextNode("");
+	topNode = document.createTextNode("");
+	bottomNode = document.createTextNode("");
+	sharkNode = document.createTextNode("");
+	endNode = document.createTextNode("");
+	
+	northElement.appendChild(northNode);
+	southElement.appendChild(southNode);
+	eastElement.appendChild(eastNode);
+	westElement.appendChild(westNode);
+	topElement.appendChild(topNode);
+	bottomElement.appendChild(bottomNode);
+	sharkElement.appendChild(sharkNode);
+	endElement.appendChild(endNode);
+	
 	c_northStr = c_maxStr;
 	c_southStr = c_maxStr;
 	c_eastStr = c_maxStr;
