@@ -1,9 +1,6 @@
 var canvas;
 var gl;
 
-var pointsArray = [];
-var normalsArray = [];
-
 // shark cage walls
 var cage_south = [
         vec4( -0.5, -0.5,  0.5, 1.0 ),
@@ -41,35 +38,32 @@ var cage_bottom = [
         vec4( 0.5,  -0.5, 0.5, 1.0 ),
         vec4( 0.5, -0.5, -0.5, 1.0 )
 	];
-	
+
+// shark 
 var shark = [
 		vec4( -0.3, -0.3, -0.6, 1.0 ),
         vec4( -0.45,  0.45, -0.6, 1.0 ),
         vec4( 0.45,  0.45, -0.6, 1.0 ),
         vec4( 0.3, -0.3, -0.6, 1.0 )
 	];
-
 var sharkmouth = [
 		vec4( -0.1, -0.1, -0.6, 1.0 ),
         vec4( -0.2,  0.2, -0.6, 1.0 ),
         vec4( 0.2,  0.2, -0.6, 1.0 ),
         vec4( 0.1, -0.1, -0.6, 1.0 )
 	];
-
 var sharkeye1 = [
 		vec4( -0.4, 0.4, -0.6, 1.0 ),
         vec4( -0.35,  0.4, -0.6, 1.0 ),
         vec4( -0.25,  0.4, -0.6, 1.0 ),
         vec4( -0.35, 0.3, -0.6, 1.0 )
 	];
-	
 var sharkeye2 = [
 		vec4( 0.4, 0.4, -0.6, 1.0 ),
         vec4( 0.35,  0.4, -0.6, 1.0 ),
         vec4( 0.25,  0.4, -0.6, 1.0 ),
         vec4( 0.35, 0.3, -0.6, 1.0 )
 	];
-
 
 //color reference   
 /* var vertexColors = [
@@ -120,7 +114,38 @@ var far = 3.0;
 var fov = 110.0;  // Field-of-view in Y direction angle (in degrees)
 var aspect;
 
-function quad(v, a, b, c, d) {
+// cage strength
+var c_maxStr = 300;
+var c_northStr;
+var c_southStr;
+var c_eastStr;
+var c_westStr;
+var c_topStr;
+var c_bottomStr;
+
+var sharkCount = 10; // sharks to attack (no scare/health)
+
+var cn_pointsArray = [];
+var cs_pointsArray = [];
+var ce_pointsArray = [];
+var cw_pointsArray = [];
+var ct_pointsArray = [];
+var cb_pointsArray = [];
+
+var cn_normalsArray = [];
+var cs_normalsArray = [];
+var ce_normalsArray = [];
+var cw_normalsArray = [];
+var ct_normalsArray = [];
+var cb_normalsArray = [];
+
+var shark_pointsArray = [];
+var shark_normalsArray = [];
+
+var pointsArray = [];
+var normalsArray = [];
+
+function quad(v, a, b, c, d, nA, pA) {
 
      var t1 = subtract(v[b], v[a]);
      var t2 = subtract(v[c], v[b]);
@@ -128,34 +153,107 @@ function quad(v, a, b, c, d) {
      var normal = vec3(normal);
      normal = normalize(normal);
 
-     pointsArray.push(v[a]);
-     normalsArray.push(normal); 
-     pointsArray.push(v[b]);  
-     normalsArray.push(normal); 
-     pointsArray.push(v[c]);
-     normalsArray.push(normal);   
-     pointsArray.push(v[a]);      
-     normalsArray.push(normal); 
-     pointsArray.push(v[c]);  
-     normalsArray.push(normal); 
-     pointsArray.push(v[d]); 
-     normalsArray.push(normal);    
+     pA.push(v[a]);
+     nA.push(normal); 
+     pA.push(v[b]);  
+     nA.push(normal); 
+     pA.push(v[c]);
+     nA.push(normal);   
+     pA.push(v[a]);      
+     nA.push(normal); 
+     pA.push(v[c]);  
+     nA.push(normal); 
+     pA.push(v[d]); 
+     nA.push(normal);    
 }
 
 function colorCage(){
-    quad( cage_south, 1, 0, 3, 2 );
-    quad( cage_north, 0, 1, 2, 3 );
-    quad( cage_east, 0, 1, 2, 3 );
-    quad( cage_west, 0, 1, 2, 3);
-    quad( cage_top, 1, 0, 3, 2 );
-    quad( cage_bottom, 1, 0, 3, 2 );
+    /* quad( cage_south, 1, 0, 3, 2, cs_normalsArray, cs_pointsArray );
+    quad( cage_north, 0, 1, 2, 3, cn_normalsArray, cn_pointsArray );
+    quad( cage_east, 0, 1, 2, 3, ce_normalsArray, ce_pointsArray );
+    quad( cage_west, 0, 1, 2, 3, cw_normalsArray, cw_pointsArray);
+    quad( cage_top, 1, 0, 3, 2, ct_normalsArray, ct_pointsArray );
+    quad( cage_bottom, 1, 0, 3, 2, cb_normalsArray, cb_pointsArray ); */
+	
+	//cage south
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( 0.4 - (i*0.1), -0.5,  0.5, 1.0 ),
+				vec4( 0.4 - (i*0.1),  0.5,  0.5, 1.0 ),
+				vec4( 0.5 - (i*0.1), 0.5,  0.5, 1.0 ),
+				vec4( 0.5 - (i*0.1), -0.5,  0.5, 1.0 )],
+				1, 0, 3, 2, normalsArray, pointsArray);
+		}
+	}
+	
+	//cage east
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( 0.5, -0.5, -0.5 + (i*0.1), 1.0 ),
+				vec4( 0.5,  0.5, -0.5 + (i*0.1), 1.0 ),
+				vec4( 0.5,  0.5, -0.4 + (i*0.1), 1.0 ),
+				vec4( 0.5, -0.5, -0.4 + (i*0.1), 1.0 )],
+				0, 1, 2, 3, normalsArray, pointsArray);
+		}
+	}
+	
+	//cage west
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( -0.5, -0.5, 0.5 - (i*0.1), 1.0 ),
+				vec4( -0.5,  0.5, 0.5 - (i*0.1), 1.0 ),
+				vec4( -0.5,  0.5, 0.4 - (i*0.1), 1.0 ),
+				vec4( -0.5, -0.5, 0.4 - (i*0.1), 1.0 )],
+				0, 1, 2, 3, normalsArray, pointsArray);
+		}
+	}
+	
+	//cage top
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( -0.5, 0.5, 0.4- (i*0.1), 1.0 ),
+				vec4( -0.5, 0.5, 0.5 - (i*0.1), 1.0 ),
+				vec4( 0.5,  0.5, 0.5 - (i*0.1), 1.0 ),
+				vec4( 0.5, 0.5, 0.4 - (i*0.1), 1.0 )],
+				1, 0, 3, 2, normalsArray, pointsArray);
+		}
+	}
+	
+	//cage bottom
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( -0.5, -0.5, -0.5 + (i*0.1), 1.0 ),
+				vec4( -0.5, -0.5, -0.4 + (i*0.1), 1.0 ),
+				vec4( 0.5,  -0.5, -0.4 + (i*0.1), 1.0 ),
+				vec4( 0.5, -0.5, -0.5 + (i*0.1), 1.0 )],
+				1, 0, 3, 2, normalsArray, pointsArray);
+		}
+	}
+	
+	//cage north
+	for (i = 0; i < 10; i++){
+		if ((i%2 > 0)||(i==0)){
+		quad([	vec4( -0.5 + (i*0.1), -0.5, -0.5, 1.0 ),
+				vec4( -0.5 + (i*0.1),  0.5, -0.5, 1.0 ),
+				vec4( -0.4 + (i*0.1),  0.5, -0.5, 1.0 ),
+				vec4( -0.4 + (i*0.1), -0.5, -0.5, 1.0 )], 
+				0, 1, 2, 3, normalsArray, pointsArray);
+		}
+	}
+	
+	//quad( cage_north, 0, 1, 2, 3, normalsArray, pointsArray );
+	//quad( cage_south, 1, 0, 3, 2, normalsArray, pointsArray );
+    //quad( cage_east, 0, 1, 2, 3, normalsArray, pointsArray );
+    //quad( cage_west, 0, 1, 2, 3, normalsArray, pointsArray);
+    //quad( cage_top, 1, 0, 3, 2, normalsArray, pointsArray );
+    //quad( cage_bottom, 1, 0, 3, 2, normalsArray, pointsArray );
 }
 
 function colorShark(){
-	quad(shark, 1, 0, 3, 2);
-	quad(sharkmouth, 0, 1, 2, 3);
-	quad(sharkeye1, 0, 1, 2, 3);
-	quad(sharkeye2, 0, 1, 2, 3);
+	quad(shark, 1, 0, 3, 2, normalsArray, pointsArray);
+	quad(sharkmouth, 0, 1, 2, 3, normalsArray, pointsArray);
+	quad(sharkeye1, 0, 1, 2, 3, normalsArray, pointsArray);
+	quad(sharkeye2, 0, 1, 2, 3, normalsArray, pointsArray);
 }
 
 window.onload = function init() {
@@ -177,9 +275,11 @@ window.onload = function init() {
     program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
     
+	initVariables();
+	colorShark(); 
     colorCage();
-	colorShark();
-   
+	
+	
     var nBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW );
@@ -205,21 +305,17 @@ window.onload = function init() {
     diffuseProduct = mult(lightDiffuse, materialDiffuse);
     specularProduct = mult(lightSpecular, materialSpecular);
     
-    axis = yAxis; //or xAxis, zAxis
-    
-    gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"),
-       flatten(ambientProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"),
-       flatten(diffuseProduct) );
-    gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), 
-       flatten(specularProduct) );  
-    gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), 
-       flatten(lightPosition) );
+    gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct) );
+    gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct) );  
+    gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition) );
        
     gl.uniform1f(gl.getUniformLocation(program, "shininess"),materialShininess);
     
     gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projection));
 
+	axis = yAxis; //or xAxis, zAxis
+	
     render();
 }
 
@@ -244,7 +340,8 @@ function handleKeyUp(event) {
 
     } else if (event.keyCode == 32) {
         // spacebar
-        alert(theta[axis]);
+        normalsArray.pop();
+		pointsArray.pop();
     } else if (event.keyCode == 13) {
         // reload game
         location.reload();
@@ -275,10 +372,10 @@ var render = function(){
     
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
-	gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+	/* gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     gl.enable(gl.BLEND);
     gl.disable(gl.DEPTH_TEST);
-    gl.uniform1f(program.alphaUniform, 0.9);
+    gl.uniform1f(program.alphaUniform, 0.9); */
 	
     rotateView();
 
@@ -286,15 +383,44 @@ var render = function(){
     modelView = mult(modelView, rotate(theta[xAxis], [1, 0, 0] ));
     modelView = mult(modelView, rotate(theta[yAxis], [0, 1, 0] ));
     modelView = mult(modelView, rotate(theta[zAxis], [0, 0, 1] ));
+	
+	projection = perspective(fov, aspect, 0.1, 10);
     
     gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelView) );
- 
-    projection = perspective(fov, aspect, 0.1, 10);
-
     gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projection) );
     
-    gl.drawArrays( gl.TRIANGLES, 0, pointsArray.length);
-    
-    requestAnimFrame(render);
+	/* if (c_northStr > 0){
+		gl.drawArrays( gl.TRIANGLES, 0, cn_pointsArray.length);
+	}
+	if (c_southStr > 0){
+		gl.drawArrays( gl.TRIANGLES, 0, cs_pointsArray.length);
+	}
+	if (c_eastStr > 0){
+		gl.drawArrays( gl.TRIANGLES, 0, ce_pointsArray.length);
+	}
+	if (c_westStr > 0){
+		gl.drawArrays( gl.TRIANGLES, 0, cw_pointsArray.length);
+	}
+	if (c_topStr > 0){
+		gl.drawArrays( gl.TRIANGLES, 0, ct_pointsArray.length);
+	}
+	if (c_bottomStr > 0){
+		gl.drawArrays( gl.TRIANGLES, 0, cb_pointsArray.length);
+	}
+	if (sharkCount > 0){
+		gl.drawArrays( gl.TRIANGLES, 0, shark_pointsArray.length);
+	} */
 	
+	gl.drawArrays( gl.TRIANGLES, 0, pointsArray.length);
+	
+    requestAnimFrame(render);
+}
+
+function initVariables(){
+	c_northStr = c_maxStr;
+	c_southStr = c_maxStr;
+	c_eastStr = c_maxStr;
+	c_westStr = c_maxStr;
+	c_topStr = c_maxStr;
+	c_bottomStr = c_maxStr;
 }
