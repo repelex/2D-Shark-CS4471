@@ -59,11 +59,29 @@ main()
 <script type="text/javascript" src="initShaders.js"></script>
 <script type="text/javascript" src="MV.js"></script>
 <script type="text/javascript" src="shark3d.js"></script>
+<link rel="stylesheet" type="text/css" href="shark3d.css">
 </head>
 
 <body>
-<canvas id="gl-canvas" width="512" height="512">
-Oops ... your browser doesn't support the HTML5 canvas element
-</canvas>
+<div class="container">
+	<canvas id="gl-canvas" width="512" height="512">
+	Oops ... your browser doesn't support the HTML5 canvas element
+	</canvas>
+	<div id="overlay">
+		<div>NORTH: <span id="north"></span></div>
+		<div>SOUTH: <span id="south"></span></div>
+		<div>EAST: <span id="east"></span></div>
+		<div>WEST: <span id="west"></span></div>
+		<div>TOP: <span id="top"></span></div>
+		<div>BOTTOM: <span id="bottom"></span></div>
+		<div>SHARKS LEFT: <span id="shark"></span></div>
+	</div>
+	<div id="endgame">
+		<div><span id="end"></span></div>
+	</div>
+	<div id="controls">
+		<div>USE LEFT AND RIGHT ARROW KEYS TO TURN AND SPACEBAR TO SHOOT</div>
+	</div>
+</div>
 </body>
 </html>
