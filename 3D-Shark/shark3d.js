@@ -49,6 +49,8 @@ var c_topStr;
 var c_bottomStr;
 
 var playerDead = false;
+var isShooting = false;
+var laser_fade = 5;
 var sharkCount = 10; // sharks to attack (no scare/health)
 var sharkSide = 0;
 
@@ -67,9 +69,11 @@ var ct_normalsArray = [];
 var cb_normalsArray = [];
 var shark_pointsArray = [];
 var shark_normalsArray = [];
-
 var shadow_pointsArray = [];
+var shadow_normalsArray = [];
 var laser_pointsArray = [];
+var laser_normalsArray = [];
+
 var red = vec4(1.0, 0.0, 0.0, 1.0);
 var black = vec4(0.0, 0.0, 0.0, 1.0);
 
@@ -91,6 +95,8 @@ var cw_nBuffer;
 var ct_nBuffer;
 var cb_nBuffer;
 var shark_nBuffer;
+var shadow_nBuffer;
+var laser_nBuffer;
 var cn_vNormal;
 var cs_vNormal;
 var ce_vNormal;
@@ -98,6 +104,8 @@ var cw_vNormal;
 var ct_vNormal;
 var cb_vNormal;
 var shark_vNormal;
+var shadow_vNormal;
+var laser_vNormal;
 var cn_vBuffer;
 var cs_vBuffer;
 var ce_vBuffer;
@@ -207,11 +215,12 @@ function render(){
 		gl.drawArrays( gl.TRIANGLES, 0, shark_pointsArray.length);
 		
 		//draw shadow on opposite side
-		//gl.bindBuffer( gl.ARRAY_BUFFER, shadow_vBuffer );
-		//gl.vertexAttribPointer(shadow_vPosition, 4, gl.FLOAT, false, 0, 0);
-		//gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelView) );
-		//gl.uniform4fv(fColor, flatten(black));
-		//gl.drawArrays( gl.TRIANGLES, 0, shadow_pointsArray.length);
+		gl.bindBuffer(gl.ARRAY_BUFFER, shadow_nBuffer);
+		gl.vertexAttribPointer( shadow_vNormal, 3, gl.FLOAT, false, 0, 0 );
+		gl.bindBuffer( gl.ARRAY_BUFFER, shadow_vBuffer );
+		gl.vertexAttribPointer(shadow_vPosition, 4, gl.FLOAT, false, 0, 0);
+		gl.uniform4fv(fColor, flatten(black));
+		gl.drawArrays( gl.TRIANGLES, 0, shadow_pointsArray.length);
 	}
 	else {
 		endNode.nodeValue = "YOU WIN! PRESS [ENTER] TO RETRY.";
@@ -227,10 +236,18 @@ function render(){
 	cn_pointsArray.pop();
 	
 	//draw laser if shooting
-	//gl.bindBuffer( gl.ARRAY_BUFFER, laser_vBuffer );
-	//gl.vertexAttribPointer(laser_vPosition, 4, gl.FLOAT, false, 0, 0);
-	//gl.uniform4fv(fColor, flatten(red));
-	//gl.drawArrays( gl.TRIANGLES, 0, laser_pointsArray.length);
+	if (isShooting){
+		gl.bindBuffer(gl.ARRAY_BUFFER, laser_nBuffer);
+		gl.vertexAttribPointer( laser_vNormal, 3, gl.FLOAT, false, 0, 0 );
+		gl.bindBuffer( gl.ARRAY_BUFFER, laser_vBuffer );
+		gl.vertexAttribPointer(laser_vPosition, 4, gl.FLOAT, false, 0, 0);
+		gl.uniform4fv(fColor, flatten(red));
+		gl.drawArrays( gl.TRIANGLES, 0, laser_pointsArray.length);
+		laser_fade--;
+		if (laser_fade == 0){
+			isShooting = false;
+		}
+	}
 	
     requestAnimFrame(render);
 }
@@ -356,7 +373,15 @@ function initBuffers(){
     gl.enableVertexAttribArray(shark_vPosition);
 	
 	//shadow
-	shadow_vBuffer = gl.createBuffer();
+	shadow_nBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, shadow_nBuffer);
+	gl.bufferData( gl.ARRAY_BUFFER, flatten(shadow_normalsArray), gl.STATIC_DRAW );
+	
+	shadow_vNormal = gl.getAttribLocation( program, "vNormal" );
+    gl.vertexAttribPointer( shadow_vNormal, 3, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( shadow_vNormal );
+
+    shadow_vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, shadow_vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(shadow_pointsArray), gl.STATIC_DRAW );
     
@@ -365,7 +390,15 @@ function initBuffers(){
     gl.enableVertexAttribArray(shadow_vPosition);
 	
 	//laser
-	laser_vBuffer = gl.createBuffer();
+	laser_nBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, laser_nBuffer);
+	gl.bufferData( gl.ARRAY_BUFFER, flatten(laser_normalsArray), gl.STATIC_DRAW );
+	
+	laser_vNormal = gl.getAttribLocation( program, "vNormal" );
+    gl.vertexAttribPointer( laser_vNormal, 3, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( laser_vNormal );
+
+    laser_vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, laser_vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(laser_pointsArray), gl.STATIC_DRAW );
     
@@ -548,19 +581,16 @@ function initExtras(){
         vec4( 0.4, -0.4, 0.4, 1.0 )
 	];
 	
-	for (i = 0;i< shadow.length;i++){
-		shadow_pointsArray.push(shadow[i]);
-	}
+	quad(shadow, 0, 1, 2, 3, shadow_normalsArray, shadow_pointsArray);
 	
 	var laser = [
 		vec4( -0.4, -0.3, -0.3, 1.0 ),
-        vec4( 0.0, 0.0, -0.3, 1.0 ),
+        vec4( 0.1, 0.1, -0.3, 1.0 ),
+		vec4( 0.1, 0.1, -0.3, 1.0 ),
         vec4( 0.4,  0.3, -0.3, 1.0 )
 	];
 	
-	for (i = 0;i<laser.length;i++){
-		laser_pointsArray.push(laser[i]);
-	}
+	quad(laser, 0, 1, 2, 3, laser_normalsArray, laser_pointsArray);
 }
 
 function sharkEnter(){
@@ -635,6 +665,10 @@ function handleKeyUp(event){
 function shootWeapon(){
 	if ((sharkCount > 0)&&(!playerDead)){
 		//shoot
+		if (!isShooting){
+			isShooting = true;
+			laser_fade = 5;
+		}
 	}
 }
 
