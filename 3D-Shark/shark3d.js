@@ -15,6 +15,7 @@ var ctm;
 var ambientColor, diffuseColor, specularColor;
 var modelView, projection;
 var program;
+var fColor;
 
 var xAxis = 0;
 var yAxis = 1;
@@ -67,6 +68,11 @@ var cb_normalsArray = [];
 var shark_pointsArray = [];
 var shark_normalsArray = [];
 
+var shadow_pointsArray = [];
+var laser_pointsArray = [];
+var red = vec4(1.0, 0.0, 0.0, 1.0);
+var black = vec4(0.0, 0.0, 0.0, 1.0);
+
 // text variables
 var northNode;
 var southNode;
@@ -99,6 +105,8 @@ var cw_vBuffer;
 var ct_vBuffer;
 var cb_vBuffer;
 var shark_vBuffer;
+var shadow_vBuffer;
+var laser_vBuffer;
 var cn_vPosition;
 var cs_vPosition;
 var ce_vPosition;
@@ -106,6 +114,8 @@ var cw_vPosition;
 var ct_vPosition;
 var cb_vPosition;
 var shark_vPosition;
+var shadow_vPosition;
+var laser_vPosition;
 
 window.onload = function init() {
     
@@ -132,9 +142,12 @@ window.onload = function init() {
 	initText();
 	initShark(); 
     initCage();
+	initExtras();
 	
 	//create buffers
 	initBuffers();
+	
+	fColor = gl.getUniformLocation(program, "fColor");
 	
 	//create lighting and viewing
     modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
@@ -154,7 +167,7 @@ window.onload = function init() {
     gl.uniform1f(gl.getUniformLocation(program, "shininess"),materialShininess);
     
     gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projection));
-
+	
 	//deploy shark
 	sharkEnter();
 	
@@ -192,6 +205,13 @@ function render(){
 		gl.bindBuffer( gl.ARRAY_BUFFER, shark_vBuffer );
 		gl.vertexAttribPointer(shark_vPosition, 4, gl.FLOAT, false, 0, 0);
 		gl.drawArrays( gl.TRIANGLES, 0, shark_pointsArray.length);
+		
+		//draw shadow on opposite side
+		//gl.bindBuffer( gl.ARRAY_BUFFER, shadow_vBuffer );
+		//gl.vertexAttribPointer(shadow_vPosition, 4, gl.FLOAT, false, 0, 0);
+		//gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelView) );
+		//gl.uniform4fv(fColor, flatten(black));
+		//gl.drawArrays( gl.TRIANGLES, 0, shadow_pointsArray.length);
 	}
 	else {
 		endNode.nodeValue = "YOU WIN! PRESS [ENTER] TO RETRY.";
@@ -205,6 +225,12 @@ function render(){
 	// SLOW THIS DOWN!
 	cn_normalsArray.pop();
 	cn_pointsArray.pop();
+	
+	//draw laser if shooting
+	//gl.bindBuffer( gl.ARRAY_BUFFER, laser_vBuffer );
+	//gl.vertexAttribPointer(laser_vPosition, 4, gl.FLOAT, false, 0, 0);
+	//gl.uniform4fv(fColor, flatten(red));
+	//gl.drawArrays( gl.TRIANGLES, 0, laser_pointsArray.length);
 	
     requestAnimFrame(render);
 }
@@ -328,6 +354,25 @@ function initBuffers(){
     shark_vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(shark_vPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shark_vPosition);
+	
+	//shadow
+	shadow_vBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, shadow_vBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(shadow_pointsArray), gl.STATIC_DRAW );
+    
+    shadow_vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(shadow_vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(shadow_vPosition);
+	
+	//laser
+	laser_vBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, laser_vBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(laser_pointsArray), gl.STATIC_DRAW );
+    
+    laser_vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(laser_vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(laser_vPosition);
+	
 }
 
 function quad(v, a, b, c, d, nA, pA){
@@ -492,6 +537,30 @@ function initShark(){
 	quad(sharkmouth, 0, 1, 2, 3, shark_normalsArray, shark_pointsArray);
 	quad(sharkeye1, 0, 1, 2, 3, shark_normalsArray, shark_pointsArray);
 	quad(sharkeye2, 0, 1, 2, 3, shark_normalsArray, shark_pointsArray);
+}
+
+function initExtras(){
+	//init shadow and laser
+	var shadow = [
+		vec4( -0.4, -0.4, 0.4, 1.0 ),
+        vec4( -0.4,  0.4, 0.4, 1.0 ),
+        vec4( 0.4,  0.4, 0.4, 1.0 ),
+        vec4( 0.4, -0.4, 0.4, 1.0 )
+	];
+	
+	for (i = 0;i< shadow.length;i++){
+		shadow_pointsArray.push(shadow[i]);
+	}
+	
+	var laser = [
+		vec4( -0.4, -0.3, -0.3, 1.0 ),
+        vec4( 0.0, 0.0, -0.3, 1.0 ),
+        vec4( 0.4,  0.3, -0.3, 1.0 )
+	];
+	
+	for (i = 0;i<laser.length;i++){
+		laser_pointsArray.push(laser[i]);
+	}
 }
 
 function sharkEnter(){
