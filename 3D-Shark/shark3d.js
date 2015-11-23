@@ -185,11 +185,6 @@ function render(){
     
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	/* gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-    gl.enable(gl.BLEND);
-    gl.disable(gl.DEPTH_TEST);
-    gl.uniform1f(program.alphaUniform, 0.9); */
-	
 	//update display
 	updateText();
 	updateCage();
@@ -476,6 +471,16 @@ function updateCage(){
 }
 
 function initCage(){
+	//cage north
+	for (i = 0; i < 10; i++){
+		if (i%2 > 0){
+		quad([	vec4( -0.5 + (i*0.1), -0.5, -0.5, 1.0 ),
+				vec4( -0.5 + (i*0.1),  0.5, -0.5, 1.0 ),
+				vec4( -0.4 + (i*0.1),  0.5, -0.5, 1.0 ),
+				vec4( -0.4 + (i*0.1), -0.5, -0.5, 1.0 )], 
+				0, 1, 2, 3, cn_normalsArray, cn_pointsArray);
+		}
+	}
 	//cage south
 	for (i = 0; i < 10; i++){
 		if (i%2 > 0){
@@ -513,7 +518,7 @@ function initCage(){
 				vec4( -0.5, 0.5, 0.5 - (i*0.1), 1.0 ),
 				vec4( 0.5,  0.5, 0.5 - (i*0.1), 1.0 ),
 				vec4( 0.5, 0.5, 0.4 - (i*0.1), 1.0 )],
-				1, 0, 3, 2, ct_normalsArray, ct_pointsArray);
+				0, 1, 2, 3, ct_normalsArray, ct_pointsArray);
 		}
 	}
 	//cage bottom
@@ -524,16 +529,6 @@ function initCage(){
 				vec4( 0.5,  -0.5, -0.4 + (i*0.1), 1.0 ),
 				vec4( 0.5, -0.5, -0.5 + (i*0.1), 1.0 )],
 				1, 0, 3, 2, cb_normalsArray, cb_pointsArray);
-		}
-	}
-	//cage north
-	for (i = 0; i < 10; i++){
-		if (i%2 > 0){
-		quad([	vec4( -0.5 + (i*0.1), -0.5, -0.5, 1.0 ),
-				vec4( -0.5 + (i*0.1),  0.5, -0.5, 1.0 ),
-				vec4( -0.4 + (i*0.1),  0.5, -0.5, 1.0 ),
-				vec4( -0.4 + (i*0.1), -0.5, -0.5, 1.0 )], 
-				0, 1, 2, 3, cn_normalsArray, cn_pointsArray);
 		}
 	}
 }
@@ -667,7 +662,7 @@ function shootWeapon(){
 		if (!isShooting){
 			isShooting = true;
 			slash_fade = 5;
-			//DEBUG kill shark
+			//DEBUG kill all sharks
 			sharkCount = 0;
 		}
 	}
