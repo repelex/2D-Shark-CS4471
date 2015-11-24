@@ -150,7 +150,7 @@ window.onload = function init() {
     // initialize shaders
 	program = initShaders( gl, "vertex-shader", "fragment-shader" );
     sharkprog = initShaders( gl, "vertex-shader", "fragment-shader" );
-    gl.useProgram( program );
+    gl.useProgram(program );
 	
 	// initialize elements
 	initShark(); 
@@ -160,8 +160,6 @@ window.onload = function init() {
 	
 	//create buffers
 	initBuffers();
-	
-	fColor = gl.getUniformLocation(program, "fColor");
 	
 	//create lighting and viewing
     modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
@@ -181,7 +179,7 @@ window.onload = function init() {
     gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition) );
        
     gl.uniform1f(gl.getUniformLocation(program, "shininess"),materialShininess);
-
+    gl.useProgram( sharkprog );
     gl.uniform4fv(gl.getUniformLocation(sharkprog, "ambientProduct"), flatten(ambientProduct));
     gl.uniform4fv(gl.getUniformLocation(sharkprog, "diffuseProduct"), flatten(diffuseProduct) );
     gl.uniform4fv(gl.getUniformLocation(sharkprog, "specularProduct"), flatten(specularProduct) );  
