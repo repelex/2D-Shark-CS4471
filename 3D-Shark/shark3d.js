@@ -704,39 +704,39 @@ function handleKeyUp(event){
 	if (event.keyCode == 37 || event.keyCode ==  65) {
         // left arrow key or A
 		axis = yAxis;
-        if (!turning){
-            turnRight = false;
-            turnLeft = true;
-            degToTurn = 90;
-            turning = true;
-        }
+		if (!turning){
+			turnRight = false;
+			turnLeft = true;
+			degToTurn = 90;
+			turning = true;
+		}
     } else if (event.keyCode == 39 || event.keyCode == 68) {
         // right arrow key or D
 		axis = yAxis;
-        if (!turning){
-            turnLeft = false;
-            turnRight = true;
-            degToTurn = 90;
-            turning = true;
-        }
+		if (!turning){
+			turnLeft = false;
+			turnRight = true;
+			degToTurn = 90;
+			turning = true;
+		}
     } else if (event.keyCode == 38 || event.keyCode == 87) {
         // up key or W
 		axis = xAxis;
 		if (!turning){
-            turnLeft = false;
-            turnRight = true;
-            degToTurn = 90;
-            turning = true;
-        }
+			turnLeft = true;
+			turnRight = false;
+			degToTurn = 90;
+			turning = true;
+		}
     } else if (event.keyCode == 40 || event.keyCode == 83) {
         // down key or S
 		axis = xAxis;
-        if (!turning){
-            turnLeft = false;
-            turnRight = true;
-            degToTurn = 90;
-            turning = true;
-        }
+		if (!turning){
+			turnLeft = false;
+			turnRight = true;
+			degToTurn = 90;
+			turning = true;
+		}
     } else if (event.keyCode == 32) {
         // spacebar shoot
 		shootWeapon();
@@ -784,19 +784,27 @@ function rotateView(){
 
 function setPlayerSide(){
 	if (axis == yAxis){
+		//if () {
 		//north
 		playerSide = 0;
+		//} else if () {
 		//south
 		playerSide = 1;
+		//} else if () {
 		//east
 		playerSide = 2;
+		//} else {
 		//west
 		playerSide = 3;
+		//}
 	} else {
+		//if () {
 		//top
 		playerSide = 4;
+		//} else {
 		//bottom
 		playerSide = 5;
+		//}
 	}
 }
 
