@@ -892,7 +892,7 @@ function changePlayerView(direction){
             if (facing == north) playerup = south;
             if (facing == south) playerup = north;
             if (facing == west) playerup = east;
-            if (facing == east) playerup = wast;
+            if (facing == east) playerup = west;
             return down; 
         }
         if (playerup == south){
@@ -928,7 +928,7 @@ function changePlayerView(direction){
         if (playerup == down){
             if (facing == north) playerup = north;
             if (facing == south) playerup = south;
-            if (facing == west) playerup = wast;
+            if (facing == west) playerup = west;
             if (facing == east) playerup = east;
             return up_c; 
         }
