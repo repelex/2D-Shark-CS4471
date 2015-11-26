@@ -30,7 +30,6 @@ var turnRight = false;
 var turning = false;
 var turnRate = 2.0;
 var degToTurn;
-var playerSide = 0;
 
 const eye = vec3(0.0, 0.0, 0.0);
 const at = vec3(0.0, 0.0, 0.0);
@@ -49,8 +48,6 @@ var ct_maxStr;
 var cb_maxStr;
 
 var playerDead = false;
-var isSlashing = false;
-var slash_fade = 5;
 var sharkCount = 10; // sharks to attack (no scare/health)
 var sharkSide = 0;
 var sharkPrev = 0;
@@ -75,8 +72,6 @@ var shark_pointsArray = [];
 var shark_normalsArray = [];
 var shadow_pointsArray = [];
 var shadow_normalsArray = [];
-var slash_pointsArray = [];
-var slash_normalsArray = [];
 
 // text variables
 var northNode;
@@ -97,7 +92,6 @@ var ct_nBuffer;
 var cb_nBuffer;
 var shark_nBuffer;
 var shadow_nBuffer;
-var slash_nBuffer;
 var cn_vNormal;
 var cs_vNormal;
 var ce_vNormal;
@@ -106,7 +100,6 @@ var ct_vNormal;
 var cb_vNormal;
 var shark_vNormal;
 var shadow_vNormal;
-var slash_vNormal;
 var cn_vBuffer;
 var cs_vBuffer;
 var ce_vBuffer;
@@ -115,7 +108,6 @@ var ct_vBuffer;
 var cb_vBuffer;
 var shark_vBuffer;
 var shadow_vBuffer;
-var slash_vBuffer;
 var cn_vPosition;
 var cs_vPosition;
 var ce_vPosition;
@@ -124,7 +116,6 @@ var ct_vPosition;
 var cb_vPosition;
 var shark_vPosition;
 var shadow_vPosition;
-var slash_vPosition;
 
 window.facing;
 window.playerup;
@@ -136,7 +127,6 @@ var east = [0,0,1];
 var west = [0,0,-1];
 var up_c = [0,1,0];
 var down = [0,-1,0];
-
 
 window.onload = function init() {
     
@@ -184,13 +174,6 @@ window.onload = function init() {
     gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition) );
        
     gl.uniform1f(gl.getUniformLocation(program, "shininess"),materialShininess);
-    gl.useProgram( program );
-    gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct) );
-    gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct) );  
-    gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition) );
-       
-    gl.uniform1f(gl.getUniformLocation(program, "shininess"),materialShininess);
     
     gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projection));
 
@@ -212,7 +195,7 @@ function render(){
 	updateCage();
     rotateView();
 	
-    modelView = lookAt(eye, at, up);
+	modelView = lookAt(eye, at, up);
     modelView = mult(modelView, rotate(theta[xAxis], [1, 0, 0] ));
     modelView = mult(modelView, rotate(theta[yAxis], [0, 1, 0] ));
     modelView = mult(modelView, rotate(theta[zAxis], [0, 0, 1] ));
@@ -239,20 +222,7 @@ function render(){
 			attack_delay--;
 		} else {
 			sharkAttack();
-			attack_delay = 20;
-		}
-		
-		//draw slash if slashing
-		if (isSlashing){
-			gl.bindBuffer(gl.ARRAY_BUFFER, slash_nBuffer);
-			gl.vertexAttribPointer( slash_vNormal, 3, gl.FLOAT, false, 0, 0 );
-			gl.bindBuffer( gl.ARRAY_BUFFER, slash_vBuffer );
-			gl.vertexAttribPointer(slash_vPosition, 4, gl.FLOAT, false, 0, 0);
-			gl.drawArrays( gl.TRIANGLES, 0, slash_pointsArray.length);
-			slash_fade--;
-			if (slash_fade == 0){
-				isSlashing = false;
-			}
+			attack_delay = 10;
 		}
     }
     else {
@@ -414,24 +384,6 @@ function initBuffers(){
     shadow_vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(shadow_vPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shadow_vPosition);
-	
-	//slash
-	slash_nBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, slash_nBuffer);
-	gl.bufferData( gl.ARRAY_BUFFER, flatten(slash_normalsArray), gl.STATIC_DRAW );
-	
-	slash_vNormal = gl.getAttribLocation( program, "vNormal" );
-    gl.vertexAttribPointer( slash_vNormal, 3, gl.FLOAT, false, 0, 0 );
-    gl.enableVertexAttribArray( slash_vNormal );
-
-    slash_vBuffer = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, slash_vBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(slash_pointsArray), gl.STATIC_DRAW );
-    
-    slash_vPosition = gl.getAttribLocation(program, "vPosition");
-    gl.vertexAttribPointer(slash_vPosition, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(slash_vPosition);
-	
 }
 
 function quad(v, a, b, c, d, nA, pA){
@@ -512,6 +464,13 @@ function initCage(){
 				vec4( -0.4 + (i*0.1), -0.5, -0.5, 1.0 )], 
 				0, 1, 2, 3, cn_normalsArray, cn_pointsArray);
 		}
+		else{
+		quad([	vec4( -0.5 , -0.5 + (i*0.1), -0.5, 1.0 ),
+				vec4( -0.5 , -0.4 + (i*0.1), -0.5, 1.0 ),
+				vec4(  0.5 , -0.4 + (i*0.1), -0.5, 1.0 ),
+				vec4(  0.5 , -0.5 + (i*0.1), -0.5, 1.0 )], 
+				0, 1, 2, 3, cn_normalsArray, cn_pointsArray);
+		}
 	}
 	//cage south
 	for (i = 0; i < 10; i++){
@@ -520,6 +479,13 @@ function initCage(){
 				vec4( 0.4 - (i*0.1),  0.5,  0.5, 1.0 ),
 				vec4( 0.5 - (i*0.1), 0.5,  0.5, 1.0 ),
 				vec4( 0.5 - (i*0.1), -0.5,  0.5, 1.0 )],
+				1, 0, 3, 2, cs_normalsArray, cs_pointsArray);
+		}
+		else {
+		quad([	vec4( -0.5 , 0.4 - (i*0.1), 0.5, 1.0 ),
+				vec4( -0.5 , 0.5 - (i*0.1), 0.5, 1.0 ),
+				vec4(  0.5 , 0.5 - (i*0.1), 0.5, 1.0 ),
+				vec4(  0.5 , 0.4 - (i*0.1), 0.5, 1.0 )], 
 				1, 0, 3, 2, cs_normalsArray, cs_pointsArray);
 		}
 	}
@@ -532,6 +498,13 @@ function initCage(){
 				vec4( 0.5, -0.5, -0.4 + (i*0.1), 1.0 )],
 				0, 1, 2, 3, ce_normalsArray, ce_pointsArray);
 		}
+		else {
+		quad([	vec4( 0.5, -0.5 + (i*0.1), -0.5 , 1.0 ),
+				vec4( 0.5, -0.4 + (i*0.1), -0.5 , 1.0 ),
+				vec4( 0.5, -0.4 + (i*0.1), 0.5 , 1.0 ),
+				vec4( 0.5, -0.5 + (i*0.1), 0.5 , 1.0 )],
+				0, 1, 2, 3, ce_normalsArray, ce_pointsArray);
+		}
 	}
 	//cage west
 	for (i = 0; i < 10; i++){
@@ -540,6 +513,13 @@ function initCage(){
 				vec4( -0.5,  0.5, 0.5 - (i*0.1), 1.0 ),
 				vec4( -0.5,  0.5, 0.4 - (i*0.1), 1.0 ),
 				vec4( -0.5, -0.5, 0.4 - (i*0.1), 1.0 )],
+				0, 1, 2, 3, cw_normalsArray, cw_pointsArray);
+		}
+		else {
+		quad([	vec4( -0.5, 0.4 - (i*0.1), 0.5 , 1.0 ),
+				vec4( -0.5,  0.5 - (i*0.1), 0.5 , 1.0 ),
+				vec4( -0.5,  0.5 - (i*0.1), -0.5 , 1.0 ),
+				vec4( -0.5, 0.4 - (i*0.1), -0.5 , 1.0 )],
 				0, 1, 2, 3, cw_normalsArray, cw_pointsArray);
 		}
 	}
@@ -552,6 +532,13 @@ function initCage(){
 				vec4( 0.5, 0.5, 0.4 - (i*0.1), 1.0 )],
 				0, 1, 2, 3, ct_normalsArray, ct_pointsArray);
 		}
+		else {
+		quad([	vec4( 0.4 - (i*0.1), 0.5, -0.5, 1.0 ),
+				vec4( 0.4 - (i*0.1), 0.5, 0.5, 1.0 ),
+				vec4( 0.5 - (i*0.1),  0.5, 0.5, 1.0 ),
+				vec4( 0.5 - (i*0.1), 0.5, -0.5, 1.0 )],
+				0, 1, 2, 3, ct_normalsArray, ct_pointsArray);
+		}
 	}
 	//cage bottom
 	for (i = 0; i < 10; i++){
@@ -561,6 +548,14 @@ function initCage(){
 				vec4( 0.5,  -0.5, -0.4 + (i*0.1), 1.0 ),
 				vec4( 0.5, -0.5, -0.5 + (i*0.1), 1.0 )],
 				1, 0, 3, 2, cb_normalsArray, cb_pointsArray);
+		}
+		else{
+		quad([	vec4( -0.4 + (i*0.1), -0.5, -0.5 , 1.0 ),
+				vec4( -0.4 + (i*0.1), -0.5, 0.4 , 1.0 ),
+				vec4( -0.5 + (i*0.1), -0.5, 0.4 , 1.0 ),
+				vec4( -0.5 + (i*0.1), -0.5, -0.5 , 1.0 )],
+				0, 1, 2, 3, cb_normalsArray, cb_pointsArray);
+			
 		}
 	}
 }
@@ -599,7 +594,7 @@ function initShark(){
 }
 
 function initExtras(){
-	//init shadow and slash
+	//init shadow
 	var shadow = [
 		vec4( -0.4, -0.4, 0.4, 1.0 ),
         vec4( -0.4,  0.4, 0.4, 1.0 ),
@@ -608,15 +603,6 @@ function initExtras(){
 	];
 	
 	quad(shadow, 0, 1, 2, 3, shadow_normalsArray, shadow_pointsArray);
-	
-	var slash = [
-		vec4( -0.4, -0.3, -0.3, 1.0 ),
-        vec4( 0.1, 0.1, -0.3, 1.0 ),
-		vec4( 0.1, 0.1, -0.3, 1.0 ),
-        vec4( 0.4,  0.3, -0.3, 1.0 )
-	];
-	
-	quad(slash, 0, 1, 2, 3, slash_normalsArray, slash_pointsArray);
 }
 
 function sharkEnter(){
@@ -724,8 +710,8 @@ function sharkAttack(){
 function handleKeyUp(event){
 	if (event.keyCode == 37 || event.keyCode ==  65) {
         // left arrow key or A
-        axis = yAxis;
 		if (!turning){
+			axis = yAxis;
             if (playerup == down) {
                 turnRight = true;
                 turnLeft = false;
@@ -739,9 +725,8 @@ function handleKeyUp(event){
 		}
     } else if (event.keyCode == 39 || event.keyCode == 68) {
         // right arrow key or D
-		axis = yAxis;
-
 		if (!turning){
+			axis = yAxis;
     		if (playerup == down) {
                 turnRight = false;
                 turnLeft = true;
@@ -755,8 +740,8 @@ function handleKeyUp(event){
 		}
     } else if (event.keyCode == 38 || event.keyCode == 87) {
         // up key or W
-		axis = xAxis;
 		if (!turning){
+			axis = xAxis;
             facing = changePlayerView("up");
 			turnLeft = true;
 			turnRight = false;
@@ -765,8 +750,8 @@ function handleKeyUp(event){
 		}
     } else if (event.keyCode == 40 || event.keyCode == 83) {
         // down key or S
-		axis = xAxis;
 		if (!turning){
+			axis = xAxis;
             facing = changePlayerView("down");
 			turnLeft = false;
 			turnRight = true;
@@ -780,19 +765,11 @@ function handleKeyUp(event){
         // reload game
         location.reload();
     }
-    if (event.keyCode == 16){
-        alert(facing);
-    }
 }
 
 function shootWeapon(){
 	if ((sharkCount > 0)&&(!playerDead)){
 		//shoot
-		if (!isSlashing){
-			isSlashing = true;
-			slash_fade = 5;
-		}
-		
 		if (facing == sharkfacing){
 			sharkCount--;
 			sharkEnter();
@@ -915,7 +892,6 @@ function changePlayerView(direction){
             if (facing == down) playerup = up_c;
             return west;
         }
-        
     }
     if (direction == "down"){
         if (playerup == up_c){
@@ -952,9 +928,7 @@ function changePlayerView(direction){
             if (facing == down) playerup = down;
             return east;
         }
-        
     }    
-
 }
 
 function updateText(){
@@ -1004,7 +978,6 @@ function initText(){
 	ct_maxStr = cn_normalsArray.length;
 	cb_maxStr = cn_normalsArray.length;
 }
-
 
 function randomInt(range) {
   return Math.floor(Math.random() * range);
