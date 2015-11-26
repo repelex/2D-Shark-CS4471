@@ -128,6 +128,7 @@ var slash_vPosition;
 
 window.facing;
 window.playerup;
+window.sharkfacing;
 
 var north = [1,0,0];
 var south = [-1,0,0];
@@ -198,7 +199,6 @@ window.onload = function init() {
 	
     facing = north;
     playerup = up_c;
-    lraxis = yAxis;
     render();
 }
 
@@ -625,32 +625,39 @@ function sharkEnter(){
 		//dont enter from previous side
 		sharkEnter();
 	} else {
+        sharkPrev = sharkSide;
 		if (sharkSide == 0){
 			//north
 			sharkAxis = [0, 1, 0];
 			sharkDeg = 0;
+            sharkfacing = north;
 		} else if (sharkSide == 1){
 			//south
 			sharkAxis = [0, 1, 0];
 			sharkDeg = 180;
+            sharkfacing = south;
 		} else if (sharkSide == 2){
 			//east
 			sharkAxis = [0, 1, 0];
 			sharkDeg = 270;
+            sharkfacing = east;
 		} else if (sharkSide == 3){
 			//west
 			sharkAxis = [0, 1, 0];
 			sharkDeg = 90;
+            sharkfacing = west;
 		} else if (sharkSide == 4){
 			//top
 			sharkAxis = [1, 0, 0];
 			sharkDeg = 90;
+            sharkfacing = up_c;
 		} else {
 			//bottom
 			sharkAxis = [1, 0, 0];
 			sharkDeg = 270;
+            sharkfacing = down;
 		}
-		sharkPrev = sharkSide;
+		
 	}
 }
 
@@ -786,7 +793,7 @@ function shootWeapon(){
 			slash_fade = 5;
 		}
 		
-		if (sharkSide == playerSide){
+		if (facing == sharkfacing){
 			sharkCount--;
 			sharkEnter();
 		}
@@ -947,7 +954,7 @@ function changePlayerView(direction){
         }
         
     }    
-    return [2,2,2];
+
 }
 
 function updateText(){
