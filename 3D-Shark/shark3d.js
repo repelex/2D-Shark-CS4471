@@ -238,7 +238,7 @@ function render(){
 		if (attack_delay > 0){
 			attack_delay--;
 		} else {
-			//sharkAttack();
+			sharkAttack();
 			attack_delay = 20;
 		}
 		
