@@ -126,6 +126,17 @@ var shark_vPosition;
 var shadow_vPosition;
 var slash_vPosition;
 
+window.facing;
+window.playerup;
+
+var north = [1,0,0];
+var south = [-1,0,0];
+var east = [0,0,1];
+var west = [0,0,-1];
+var up_c = [0,1,0];
+var down = [0,-1,0];
+
+
 window.onload = function init() {
     
     canvas = document.getElementById( "gl-canvas" );
@@ -185,6 +196,9 @@ window.onload = function init() {
 	//deploy shark
 	sharkEnter();
 	
+    facing = north;
+    playerup = up_c;
+    lraxis = yAxis;
     render();
 }
 
@@ -224,7 +238,7 @@ function render(){
 		if (attack_delay > 0){
 			attack_delay--;
 		} else {
-			sharkAttack();
+			//sharkAttack();
 			attack_delay = 20;
 		}
 		
@@ -703,26 +717,40 @@ function sharkAttack(){
 function handleKeyUp(event){
 	if (event.keyCode == 37 || event.keyCode ==  65) {
         // left arrow key or A
-		axis = yAxis;
+        axis = yAxis;
 		if (!turning){
-			turnRight = false;
-			turnLeft = true;
+            if (playerup == down) {
+                turnRight = true;
+                turnLeft = false;
+            } else {
+                turnRight = false;
+                turnLeft = true;
+            }
 			degToTurn = 90;
 			turning = true;
+            facing = changePlayerView("left");
 		}
     } else if (event.keyCode == 39 || event.keyCode == 68) {
         // right arrow key or D
 		axis = yAxis;
+
 		if (!turning){
-			turnLeft = false;
-			turnRight = true;
-			degToTurn = 90;
-			turning = true;
+    		if (playerup == down) {
+                turnRight = false;
+                turnLeft = true;
+            } else {
+                turnRight = true;
+                turnLeft = false;
+            }
+    		degToTurn = 90;
+    		turning = true;
+            facing = changePlayerView("right");
 		}
     } else if (event.keyCode == 38 || event.keyCode == 87) {
         // up key or W
 		axis = xAxis;
 		if (!turning){
+            facing = changePlayerView("up");
 			turnLeft = true;
 			turnRight = false;
 			degToTurn = 90;
@@ -732,6 +760,7 @@ function handleKeyUp(event){
         // down key or S
 		axis = xAxis;
 		if (!turning){
+            facing = changePlayerView("down");
 			turnLeft = false;
 			turnRight = true;
 			degToTurn = 90;
@@ -743,6 +772,9 @@ function handleKeyUp(event){
     } else if (event.keyCode == 13) {
         // reload game
         location.reload();
+    }
+    if (event.keyCode == 16){
+        alert(facing);
     }
 }
 
@@ -768,7 +800,6 @@ function rotateView(){
         if (degToTurn == 0) {
             turnLeft=false;
             turning = false;
-			setPlayerSide();
         }
     }
     if (turnRight){
@@ -777,35 +808,146 @@ function rotateView(){
         if (degToTurn == 0){ 
             turnRight=false;
             turning = false;
-			setPlayerSide();
         }
     }
 }
 
-function setPlayerSide(){
-	if (axis == yAxis){
-		//if () {
-		//north
-		playerSide = 0;
-		//} else if () {
-		//south
-		playerSide = 1;
-		//} else if () {
-		//east
-		playerSide = 2;
-		//} else {
-		//west
-		playerSide = 3;
-		//}
-	} else {
-		//if () {
-		//top
-		playerSide = 4;
-		//} else {
-		//bottom
-		playerSide = 5;
-		//}
-	}
+function changePlayerView(direction){
+    if (direction == "left"){
+        if (playerup == up_c){
+            if (facing == north) return west;
+            if (facing == west) return south;
+            if (facing == south) return east;
+            if (facing == east) return north;
+        }
+        if (playerup == down){
+            if (facing == north) return east;
+            if (facing == west) return north;
+            if (facing == south) return west;
+            if (facing == east) return south;
+        }
+        if (playerup == south){
+            playerup = east;
+            return facing;
+        }
+        if (playerup == west){
+            playerup = south;
+            return facing;
+        }
+        if (playerup == north){
+            playerup = west;
+            return facing;
+        }
+        if (playerup == east){
+            playerup = north;
+            return facing;
+        }
+    }
+    if (direction == "right"){
+        if (playerup == up_c){
+            if (facing == north) return east;
+            if (facing == west) return north;
+            if (facing == south) return west;
+            if (facing == east) return south;
+        }
+        if (playerup == down){
+            if (facing == north) return west;
+            if (facing == west) return south;
+            if (facing == south) return east;
+            if (facing == east) return north;
+        }
+        if (playerup == south){
+            playerup = west;
+            return facing;
+        }
+        if (playerup == west){
+            playerup = north;
+            return facing;
+        }
+        if (playerup == north){
+            playerup = east;
+            return facing;
+        }
+        if (playerup == east){
+            playerup = south;
+            return facing;
+        }
+    }
+    if (direction == "up"){
+        if (playerup == up_c){
+            if (facing == north) playerup = south;
+            if (facing == south) playerup = north;
+            if (facing == west) playerup = east;
+            if (facing == east) playerup = west;
+            return up_c;
+        }
+        if (playerup == down){
+            if (facing == north) playerup = south;
+            if (facing == south) playerup = north;
+            if (facing == west) playerup = east;
+            if (facing == east) playerup = wast;
+            return down; 
+        }
+        if (playerup == south){
+            if (facing == up_c) playerup = down;
+            if (facing == down) playerup = up_c;
+            return south;
+        }
+        if (playerup == north){
+            if (facing == up_c) playerup = down;
+            if (facing == down) playerup = up_c;
+            return north;
+        }
+        if (playerup == east){
+            if (facing == up_c) playerup = down;
+            if (facing == down) playerup = up_c;
+            return east;
+        }
+        if (playerup == west){
+            if (facing == up_c) playerup = down;
+            if (facing == down) playerup = up_c;
+            return west;
+        }
+        
+    }
+    if (direction == "down"){
+        if (playerup == up_c){
+            if (facing == north) playerup = north;
+            if (facing == south) playerup = south;
+            if (facing == west) playerup = west;
+            if (facing == east) playerup = east;
+            return down;
+        }
+        if (playerup == down){
+            if (facing == north) playerup = north;
+            if (facing == south) playerup = south;
+            if (facing == west) playerup = wast;
+            if (facing == east) playerup = east;
+            return up_c; 
+        }
+        if (playerup == south){
+            if (facing == up_c) playerup = up_c;
+            if (facing == down) playerup = down;
+            return north;
+        }
+        if (playerup == north){
+            if (facing == up_c) playerup = up_c;
+            if (facing == down) playerup = down;
+            return south;
+        }
+        if (playerup == east){
+            if (facing == up_c) playerup = up_c;
+            if (facing == down) playerup = down;
+            return west;
+        }
+        if (playerup == west){
+            if (facing == up_c) playerup = up_c;
+            if (facing == down) playerup = down;
+            return east;
+        }
+        
+    }    
+    return [2,2,2];
 }
 
 function updateText(){
@@ -855,6 +997,7 @@ function initText(){
 	ct_maxStr = cn_normalsArray.length;
 	cb_maxStr = cn_normalsArray.length;
 }
+
 
 function randomInt(range) {
   return Math.floor(Math.random() * range);
