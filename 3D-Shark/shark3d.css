@@ -30,6 +30,15 @@
     padding: 1em;
     text-shadow: 0px 0px 5px white;
 }
+#lights {
+    position: absolute;
+    left: 135px;
+    bottom: 0px;
+    color: white;
+    font-family: monospace;
+    padding: 1em;
+    text-shadow: 0px 0px 5px white;
+}
 canvas {
 	-webkit-touch-callout: none;
     -webkit-user-select: none;
