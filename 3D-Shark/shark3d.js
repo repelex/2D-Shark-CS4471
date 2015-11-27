@@ -1,15 +1,15 @@
 var canvas;
 var gl;
 
-var lightPosition = vec4(-0.2, 0.3, 0.0, 0.0 );
-var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
-var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
-var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
-
-var materialAmbient = vec4( 0.0, 0.0, 0.0, 0.0 );
-var materialDiffuse = vec4( 1.0, 0.9, 1.0, 1.0);
-var materialSpecular = vec4( 1.0, 0.9, 1.0, 1.0 );
-var materialShininess = 100.0;
+var lightPosition;
+var lightAmbient;
+var lightDiffuse;
+var lightSpecular;
+var materialAmbient;
+var materialDiffuse;
+var materialSpecular;
+var materialShininess;
+var lightsOn = true;
 
 var ctm;
 var ambientColor, diffuseColor, specularColor;
@@ -164,16 +164,8 @@ window.onload = function init() {
 	
 	projection = ortho(-1, 1, -1, 1, -100, 100);
     
-    ambientProduct = mult(lightAmbient, materialAmbient);
-    diffuseProduct = mult(lightDiffuse, materialDiffuse);
-    specularProduct = mult(lightSpecular, materialSpecular);
-    
-    gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct) );
-    gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct) );  
-    gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition) );
-       
-    gl.uniform1f(gl.getUniformLocation(program, "shininess"),materialShininess);
+	// initialize lights
+    updateLights();
     
     gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projection));
 
@@ -193,6 +185,7 @@ function render(){
 	//update display
 	updateText();
 	updateCage();
+	updateLights();
     rotateView();
 	
 	modelView = lookAt(eye, at, up);
@@ -708,6 +701,7 @@ function sharkAttack(){
 }
 
 function handleKeyUp(event){
+	
 	if (event.keyCode == 37 || event.keyCode ==  65) {
         // left arrow key or A
 		if (!turning){
@@ -758,6 +752,13 @@ function handleKeyUp(event){
 			degToTurn = 90;
 			turning = true;
 		}
+	} else if (event.keyCode == 76) {
+        // toggle lights
+		if (lightsOn){
+			lightsOn = false;
+		} else {
+			lightsOn = true;
+		}
     } else if (event.keyCode == 32) {
         // spacebar shoot
 		shootWeapon();
@@ -765,6 +766,42 @@ function handleKeyUp(event){
         // reload game
         location.reload();
     }
+}
+
+function updateLights(){
+	
+	if (lightsOn){
+		lightPosition = vec4(-0.2, 0.3, 0.0, 0.0 );
+		lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
+		lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
+		lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
+
+		materialAmbient = vec4( 0.0, 0.0, 0.0, 0.0 );
+		materialDiffuse = vec4( 1.0, 0.9, 1.0, 1.0);
+		materialSpecular = vec4( 1.0, 0.9, 1.0, 1.0 );
+		materialShininess = 100.0;
+	} else {
+		lightPosition = vec4(0.0, 0.0, 0.0, 0.0 );
+		lightAmbient = vec4(0.0, 0.0, 0.0, 0.0 );
+		lightDiffuse = vec4( 0.0, 0.0, 0.0, 0.0 );
+		lightSpecular = vec4( 0.0, 0.0, 0.0, 0.0 );
+
+		materialAmbient = vec4( 0.0, 0.0, 0.0, 0.0 );
+		materialDiffuse = vec4( 1.0, 0.9, 1.0, 1.0);
+		materialSpecular = vec4( 1.0, 0.9, 1.0, 1.0 );
+		materialShininess = 100.0;	
+	}
+	
+	ambientProduct = mult(lightAmbient, materialAmbient);
+	diffuseProduct = mult(lightDiffuse, materialDiffuse);
+	specularProduct = mult(lightSpecular, materialSpecular);
+    
+	gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
+	gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct) );
+	gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct) );  
+	gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition) );
+       
+	gl.uniform1f(gl.getUniformLocation(program, "shininess"),materialShininess);
 }
 
 function shootWeapon(){
@@ -972,11 +1009,11 @@ function initText(){
 	endElement.appendChild(endNode);
 	
 	cn_maxStr = cn_normalsArray.length;
-	cs_maxStr = cn_normalsArray.length;
-	ce_maxStr = cn_normalsArray.length;
-	cw_maxStr = cn_normalsArray.length;
-	ct_maxStr = cn_normalsArray.length;
-	cb_maxStr = cn_normalsArray.length;
+	cs_maxStr = cs_normalsArray.length;
+	ce_maxStr = ce_normalsArray.length;
+	cw_maxStr = cw_normalsArray.length;
+	ct_maxStr = ct_normalsArray.length;
+	cb_maxStr = cb_normalsArray.length;
 }
 
 function randomInt(range) {
