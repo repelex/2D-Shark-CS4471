@@ -1,6 +1,8 @@
 var canvas;
 var gl;
+var program;
 
+// lights variables
 var lightPosition;
 var lightAmbient;
 var lightDiffuse;
@@ -11,41 +13,26 @@ var materialSpecular;
 var materialShininess;
 var lightsOn = true;
 
-var ctm;
-var ambientColor, diffuseColor, specularColor;
+// viewing variables
 var modelView, projection;
-var program;
-var fColor;
-
 var xAxis = 0;
 var yAxis = 1;
 var zAxis = 2;
 var axis = 0;
 var theta =[0, 0, 0];
-
 var modelViewMatrixLoc, projectionMatrixLoc;
-
 var turnLeft = false;
 var turnRight = false;
 var turning = false;
 var turnRate = 2.0;
 var degToTurn;
-
 const eye = vec3(0.0, 0.0, 0.0);
 const at = vec3(0.0, 0.0, 0.0);
 const up = vec3(0.0, 1.0, 0.0);
 var near = 0.3;
 var far = 3.0;
-var fov = 110.0;  // Field-of-view in Y direction angle (in degrees)
+var fov = 110.0;
 var aspect;
-
-// cage strength
-var cn_maxStr;
-var cs_maxStr;
-var ce_maxStr;
-var cw_maxStr;
-var ct_maxStr;
-var cb_maxStr;
 
 var playerDead = false;
 var sharkCount = 10; // sharks to attack (no scare/health)
@@ -72,6 +59,14 @@ var shark_pointsArray = [];
 var shark_normalsArray = [];
 var shadow_pointsArray = [];
 var shadow_normalsArray = [];
+
+// cage strength
+var cn_maxStr;
+var cs_maxStr;
+var ce_maxStr;
+var cw_maxStr;
+var ct_maxStr;
+var cb_maxStr;
 
 // text variables
 var northNode;
@@ -117,10 +112,10 @@ var cb_vPosition;
 var shark_vPosition;
 var shadow_vPosition;
 
+// directional variables
 window.facing;
 window.playerup;
 window.sharkfacing;
-
 var north = [1,0,0];
 var south = [-1,0,0];
 var east = [0,0,1];
@@ -153,7 +148,7 @@ window.onload = function init() {
 	initShark(); 
     initCage();
 	initText();
-	initExtras();
+	initShadow();
 	
 	//create buffers
 	initBuffers();
@@ -178,7 +173,6 @@ window.onload = function init() {
 }
 
 function render(){
-    
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram( program );
 	
@@ -380,8 +374,8 @@ function initBuffers(){
 }
 
 function quad(v, a, b, c, d, nA, pA){
-
-     var t1 = subtract(v[b], v[a]);
+     
+	 var t1 = subtract(v[b], v[a]);
      var t2 = subtract(v[c], v[b]);
      var normal = cross(t1, t2);
      var normal = vec3(normal);
@@ -448,7 +442,7 @@ function updateCage(){
 }
 
 function initCage(){
-	//cage north
+	//north
 	for (i = 0; i < 10; i++){
 		if (i%2 > 0){
 		quad([	vec4( -0.5 + (i*0.1), -0.5, -0.5, 1.0 ),
@@ -465,7 +459,7 @@ function initCage(){
 				0, 1, 2, 3, cn_normalsArray, cn_pointsArray);
 		}
 	}
-	//cage south
+	//south
 	for (i = 0; i < 10; i++){
 		if (i%2 > 0){
 		quad([	vec4( 0.4 - (i*0.1), -0.5,  0.5, 1.0 ),
@@ -482,7 +476,7 @@ function initCage(){
 				1, 0, 3, 2, cs_normalsArray, cs_pointsArray);
 		}
 	}
-	//cage east
+	//east
 	for (i = 0; i < 10; i++){
 		if (i%2 > 0){
 		quad([	vec4( 0.5, -0.5, -0.5 + (i*0.1), 1.0 ),
@@ -499,7 +493,7 @@ function initCage(){
 				0, 1, 2, 3, ce_normalsArray, ce_pointsArray);
 		}
 	}
-	//cage west
+	//west
 	for (i = 0; i < 10; i++){
 		if (i%2 > 0){
 		quad([	vec4( -0.5, -0.5, 0.5 - (i*0.1), 1.0 ),
@@ -516,7 +510,7 @@ function initCage(){
 				0, 1, 2, 3, cw_normalsArray, cw_pointsArray);
 		}
 	}
-	//cage top
+	//top
 	for (i = 0; i < 10; i++){
 		if (i%2 > 0){
 		quad([	vec4( -0.5, 0.5, 0.4- (i*0.1), 1.0 ),
@@ -533,7 +527,7 @@ function initCage(){
 				0, 1, 2, 3, ct_normalsArray, ct_pointsArray);
 		}
 	}
-	//cage bottom
+	//bottom
 	for (i = 0; i < 10; i++){
 		if (i%2 > 0){
 		quad([	vec4( -0.5, -0.5, -0.5 + (i*0.1), 1.0 ),
@@ -548,13 +542,11 @@ function initCage(){
 				vec4( -0.5 + (i*0.1), -0.5, 0.4 , 1.0 ),
 				vec4( -0.5 + (i*0.1), -0.5, -0.5 , 1.0 )],
 				0, 1, 2, 3, cb_normalsArray, cb_pointsArray);
-			
 		}
 	}
 }
 
 function initShark(){
-	// initialize shark
 	var shark = [
 		vec4( -0.3, -0.3, -0.6, 1.0 ),
         vec4( -0.45,  0.45, -0.6, 1.0 ),
@@ -579,22 +571,19 @@ function initShark(){
         vec4( 0.2,  0.35, -0.55, 1.0 ),
         vec4( 0.3, 0.25, -0.55, 1.0 )
 	];
-	
 	quad(shark, 1, 0, 3, 2, shark_normalsArray, shark_pointsArray);
 	quad(sharkmouth, 0, 1, 2, 3, shark_normalsArray, shark_pointsArray);
 	quad(sharkeye1, 0, 1, 3, 2, shark_normalsArray, shark_pointsArray);
 	quad(sharkeye2, 1, 0, 3, 2, shark_normalsArray, shark_pointsArray);
 }
 
-function initExtras(){
-	//init shadow
+function initShadow(){
 	var shadow = [
 		vec4( -0.4, -0.4, 0.4, 1.0 ),
         vec4( -0.4,  0.4, 0.4, 1.0 ),
         vec4( 0.4,  0.4, 0.4, 1.0 ),
         vec4( 0.4, -0.4, 0.4, 1.0 )
 	];
-	
 	quad(shadow, 0, 1, 2, 3, shadow_normalsArray, shadow_pointsArray);
 }
 
@@ -636,7 +625,6 @@ function sharkEnter(){
 			sharkDeg = 270;
             sharkfacing = down;
 		}
-		
 	}
 }
 
@@ -701,7 +689,6 @@ function sharkAttack(){
 }
 
 function handleKeyUp(event){
-	
 	if (event.keyCode == 37 || event.keyCode ==  65) {
         // left arrow key or A
 		if (!turning){
@@ -753,7 +740,7 @@ function handleKeyUp(event){
 			turning = true;
 		}
 	} else if (event.keyCode == 76) {
-        // toggle lights
+        // L key - toggle lights
 		if (lightsOn){
 			lightsOn = false;
 		} else {
@@ -779,7 +766,7 @@ function updateLights(){
 		materialAmbient = vec4( 0.0, 0.0, 0.0, 0.0 );
 		materialDiffuse = vec4( 1.0, 0.9, 1.0, 1.0);
 		materialSpecular = vec4( 1.0, 0.9, 1.0, 1.0 );
-		materialShininess = 100.0;
+		materialShininess = 100;
 	} else {
 		lightPosition = vec4(0.0, 0.0, 0.0, 0.0 );
 		lightAmbient = vec4(0.0, 0.0, 0.0, 0.0 );
