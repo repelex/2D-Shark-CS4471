@@ -36,20 +36,20 @@ var theta  = 0.0;
 var phi    = 0.0;
 var dr = 5.0 * Math.PI/180.0;
 
-var left = -3.0;
-var right = 3.0;
-var ytop =3.0;
-var bottom = -3.0;
+var left = -5.0;
+var right = 5.0;
+var ytop = 5.0;
+var bottom = -5.0;
 
 var lightPosition = vec4(1.0, 1.0, 1.0, 0.0 );
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
-var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
+var lightSpecular = vec4( 0.1, 0.1, 0.1, 1.0 );
 
-var materialAmbient = vec4( 0.0, 0.0, 1.0, 1.0 );
-var materialDiffuse = vec4( 0.0, 0.0, 1.0, 1.0 );
-var materialSpecular = vec4( 1.0, 0.8, 0.0, 1.0 );
-var materialShininess = 100.0;
+var materialAmbient = vec4( 0.1, 0.1, 0.1, 1.0 );
+var materialDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
+var materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
+var materialShininess = 1000.0;
 
 var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
@@ -117,6 +117,7 @@ window.onload = function init(){
     if ( !gl ) { alert( "WebGL isn't available" ); }
 
     gl.viewport( 0, 0, canvas.width, canvas.height );
+    //gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
     gl.enable(gl.DEPTH_TEST);
 
@@ -138,19 +139,30 @@ function render(){
     
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
-    eye = vec3(radius*Math.sin(theta)*Math.cos(phi), 
-        radius*Math.sin(theta)*Math.sin(phi), radius*Math.cos(theta));
-	
-	theta +=0.01;
+	eye = vec3(-1,.25,0);
+	theta +=1;
+
+    materialAmbient = vec4( 0, 0, 0.1, 1.0 );
+    materialDiffuse = vec4( 0, 0, 1.0, 1.0 );
+    materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
+    initLights();
 
     modelViewMatrix = lookAt(eye, at , up);
+    
     projectionMatrix = ortho(left, right, bottom, ytop, near, far);
             
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix) );
     
 	drawEarth();
-	//drawMoon();
+
+    modelViewMatrix = lookAt(eye, at , up);    
+    modelViewMatrix = mult(modelViewMatrix, rotate(theta, [0,1,0]));
+    modelViewMatrix = mult(modelViewMatrix, translate(0,0,3));
+
+    modelViewMatrix = mult(modelViewMatrix, scale2(0.5,0.5,0.5));
+    gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+	drawMoon();
 	
     window.requestAnimFrame(render);
 }
@@ -165,12 +177,15 @@ function initObjects(){
     tetrahedron(va, vb, vc, vd, numTimesToSubdivide, earth_normalsArray, earth_pointsArray);
 
 	//moon
-	var v1 = vec4(0.0, 0.0, -1.0,1);
+	
+    var v1 = vec4(0.0, 0.0, -1.0,1);
 	var v2 = vec4(0.0, 0.942809, 0.333333, 1);
 	var v3 = vec4(-0.816497, -0.471405, 0.333333, 1);
 	var v4 = vec4(0.816497, -0.471405, 0.333333,1);
+    
 	
 	tetrahedron(v1, v2, v3, v4, numTimesToSubdivide, moon_normalsArray, moon_pointsArray);
+    
 }
 
 function initBuffers(){
@@ -237,6 +252,11 @@ function drawEarth(){
 }
 
 function drawMoon(){
+    materialAmbient = vec4( 0.1, 0.1, 0.1, 1.0 );
+    materialDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
+    materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
+    initLights();
+    
 	gl.bindBuffer(gl.ARRAY_BUFFER, moon_nBuffer);
 	gl.vertexAttribPointer(moon_vNormal, 4, gl.FLOAT, false, 0, 0 );
 	gl.bindBuffer(gl.ARRAY_BUFFER, moon_vBuffer );
@@ -244,4 +264,9 @@ function drawMoon(){
     
 	for( var i=0; i<3*moon_normalsArray.length; i+=3) 
         gl.drawArrays(gl.TRIANGLES, i, 3 );
+}
+
+
+function rand() {
+  return Math.random();
 }
