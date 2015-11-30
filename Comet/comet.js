@@ -20,13 +20,14 @@
 
 var canvas;
 var gl;
+var program;
 
-var numTimesToSubdivide = 4;
- 
-var index = 0;
+var numTimesToSubdivide = 5;
 
-var pointsArray = [];
-var normalsArray = [];
+var earth_pointsArray = [];
+var earth_normalsArray = [];
+var moon_pointsArray = [];
+var moon_normalsArray = [];
 
 var near = -100;
 var far = 100;
@@ -40,18 +41,6 @@ var right = 3.0;
 var ytop =3.0;
 var bottom = -3.0;
 
-//earth
-var va = vec4(0.0, 0.0, -1.0,1);
-var vb = vec4(0.0, 0.942809, 0.333333, 1);
-var vc = vec4(-0.816497, -0.471405, 0.333333, 1);
-var vd = vec4(0.816497, -0.471405, 0.333333,1);
-
-//moon
-var v1 = vec4(0.0, 0.0, -1.0,1);
-var v2 = vec4(0.0, 0.942809, 0.333333, 1);
-var v3 = vec4(-0.816497, -0.471405, 0.333333, 1);
-var v4 = vec4(0.816497, -0.471405, 0.333333,1);
-    
 var lightPosition = vec4(1.0, 1.0, 1.0, 0.0 );
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
@@ -62,33 +51,37 @@ var materialDiffuse = vec4( 0.0, 0.0, 1.0, 1.0 );
 var materialSpecular = vec4( 1.0, 0.8, 0.0, 1.0 );
 var materialShininess = 100.0;
 
-var ctm;
-var ambientColor, diffuseColor, specularColor;
-
 var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
 var eye;
 var at = vec3(0.0, 0.0, 0.0);
 var up = vec3(0.0, 1.0, 0.0);
 
-function triangle(a, b, c){
+var earth_nBuffer;
+var earth_vNormal;
+var earth_vBuffer;
+var earth_vPosition;
+var moon_nBuffer;
+var moon_vNormal;
+var moon_vBuffer;
+var moon_vPosition;
+
+function triangle(a, b, c, nA, pA){
 	n1=vec4(a)
 	n2=vec4(b)
 	n3=vec4(c)
 	n1[3]=0.0; n2[3]=0.0; n3[3]=0.0;
 
-	normalsArray.push(n1);
-	normalsArray.push(n2);
-    normalsArray.push(n3);
+	nA.push(n1);
+	nA.push(n2);
+    nA.push(n3);
 
-	pointsArray.push(a);
-    pointsArray.push(b);      
-    pointsArray.push(c);
-
-	index += 3;
+	pA.push(a);
+    pA.push(b);      
+    pA.push(c);
 }
 
-function divideTriangle(a, b, c, count) {
+function divideTriangle(a, b, c, count, nA, pA){
     if ( count > 0 ) {
                 
         var ab = mix( a, b, 0.5);
@@ -99,25 +92,24 @@ function divideTriangle(a, b, c, count) {
         ac = normalize(ac, true);
         bc = normalize(bc, true);
                                 
-        divideTriangle( a, ab, ac, count - 1 );
-        divideTriangle( ab, b, bc, count - 1 );
-        divideTriangle( bc, c, ac, count - 1 );
-        divideTriangle( ab, bc, ac, count - 1 );
+        divideTriangle( a, ab, ac, count - 1 , nA, pA);
+        divideTriangle( ab, b, bc, count - 1 , nA, pA);
+        divideTriangle( bc, c, ac, count - 1 , nA, pA);
+        divideTriangle( ab, bc, ac, count - 1 , nA, pA);
     }
     else { 
-        triangle( a, b, c );
+        triangle( a, b, c , nA, pA);
     }
 }
 
-
-function tetrahedron(a, b, c, d, n) {
-    divideTriangle(a, b, c, n);
-    divideTriangle(d, c, b, n);
-    divideTriangle(a, d, b, n);
-    divideTriangle(a, c, d, n);
+function tetrahedron(a, b, c, d, n, nA, pA){
+    divideTriangle(a, b, c, n, nA, pA);
+    divideTriangle(d, c, b, n, nA, pA);
+    divideTriangle(a, d, b, n, nA, pA);
+    divideTriangle(a, c, d, n, nA, pA);
 }
 
-window.onload = function init() {
+window.onload = function init(){
 
     canvas = document.getElementById( "gl-canvas" );
     
@@ -126,74 +118,130 @@ window.onload = function init() {
 
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-    
     gl.enable(gl.DEPTH_TEST);
 
-    //
-    //  Load shaders and initialize attribute buffers
-    //
-    var program = initShaders( gl, "vertex-shader", "fragment-shader" );
+    //load shaders and initialize attribute buffers
+    program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
-    
-    ambientProduct = mult(lightAmbient, materialAmbient);
-    diffuseProduct = mult(lightDiffuse, materialDiffuse);
-    specularProduct = mult(lightSpecular, materialSpecular);
-    
-	//earth
-    tetrahedron(va, vb, vc, vd, numTimesToSubdivide);
-	//moon
-	//tetrahedron(v1, v2, v3, v4, numTimesToSubdivide);
-
-    var nBuffer = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer);
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW );
-    
-    var vNormal = gl.getAttribLocation( program, "vNormal" );
-    gl.vertexAttribPointer( vNormal, 4, gl.FLOAT, false, 0, 0 );
-    gl.enableVertexAttribArray( vNormal);
-
-    var vBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
-    
-    var vPosition = gl.getAttribLocation( program, "vPosition");
-    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vPosition);
+	
+	initObjects();
+    initBuffers();
+	initLights();
     
     modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
     projectionMatrixLoc = gl.getUniformLocation( program, "projectionMatrix" );
 
-    gl.uniform4fv( gl.getUniformLocation(program, 
-       "ambientProduct"),flatten(ambientProduct) );
-    gl.uniform4fv( gl.getUniformLocation(program, 
-       "diffuseProduct"),flatten(diffuseProduct) );
-    gl.uniform4fv( gl.getUniformLocation(program, 
-       "specularProduct"),flatten(specularProduct) );	
-    gl.uniform4fv( gl.getUniformLocation(program, 
-       "lightPosition"),flatten(lightPosition) );
-    gl.uniform1f( gl.getUniformLocation(program, 
-       "shininess"),materialShininess );
-
     render();
 }
 
-function render() {
+function render(){
     
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
     eye = vec3(radius*Math.sin(theta)*Math.cos(phi), 
         radius*Math.sin(theta)*Math.sin(phi), radius*Math.cos(theta));
 	
-	theta +=0.05;
+	theta +=0.01;
 
     modelViewMatrix = lookAt(eye, at , up);
     projectionMatrix = ortho(left, right, bottom, ytop, near, far);
             
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix) );
-        
-    for( var i=0; i<index; i+=3) 
-        gl.drawArrays( gl.TRIANGLES, i, 3 );
-
+    
+	drawEarth();
+	//drawMoon();
+	
     window.requestAnimFrame(render);
+}
+
+function initObjects(){
+	//earth
+	var va = vec4(0.0, 0.0, -1.0,1);
+	var vb = vec4(0.0, 0.942809, 0.333333, 1);
+	var vc = vec4(-0.816497, -0.471405, 0.333333, 1);
+	var vd = vec4(0.816497, -0.471405, 0.333333,1);
+	
+    tetrahedron(va, vb, vc, vd, numTimesToSubdivide, earth_normalsArray, earth_pointsArray);
+
+	//moon
+	var v1 = vec4(0.0, 0.0, -1.0,1);
+	var v2 = vec4(0.0, 0.942809, 0.333333, 1);
+	var v3 = vec4(-0.816497, -0.471405, 0.333333, 1);
+	var v4 = vec4(0.816497, -0.471405, 0.333333,1);
+	
+	tetrahedron(v1, v2, v3, v4, numTimesToSubdivide, moon_normalsArray, moon_pointsArray);
+}
+
+function initBuffers(){
+	//earth
+	earth_nBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, earth_nBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(earth_normalsArray), gl.STATIC_DRAW );
+    
+    earth_vNormal = gl.getAttribLocation(program, "vNormal" );
+    gl.vertexAttribPointer(earth_vNormal, 4, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray(earth_vNormal);
+
+    earth_vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, earth_vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(earth_pointsArray), gl.STATIC_DRAW);
+    
+    earth_vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(earth_vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(earth_vPosition);
+	
+	//moon
+	moon_nBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, moon_nBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(moon_normalsArray), gl.STATIC_DRAW );
+    
+    moon_vNormal = gl.getAttribLocation(program, "vNormal" );
+    gl.vertexAttribPointer(moon_vNormal, 4, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray(moon_vNormal);
+
+    moon_vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, moon_vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(moon_pointsArray), gl.STATIC_DRAW);
+    
+    moon_vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(moon_vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(moon_vPosition);
+}
+
+function initLights(){
+	ambientProduct = mult(lightAmbient, materialAmbient);
+    diffuseProduct = mult(lightDiffuse, materialDiffuse);
+    specularProduct = mult(lightSpecular, materialSpecular);
+    
+	gl.uniform4fv(gl.getUniformLocation(program, 
+       "ambientProduct"),flatten(ambientProduct) );
+    gl.uniform4fv(gl.getUniformLocation(program, 
+       "diffuseProduct"),flatten(diffuseProduct) );
+    gl.uniform4fv(gl.getUniformLocation(program, 
+       "specularProduct"),flatten(specularProduct) );	
+    gl.uniform4fv(gl.getUniformLocation(program, 
+       "lightPosition"),flatten(lightPosition) );
+    gl.uniform1f(gl.getUniformLocation(program, 
+       "shininess"),materialShininess );
+}
+
+function drawEarth(){
+	gl.bindBuffer(gl.ARRAY_BUFFER, earth_nBuffer);
+	gl.vertexAttribPointer(earth_vNormal, 4, gl.FLOAT, false, 0, 0 );
+	gl.bindBuffer(gl.ARRAY_BUFFER, earth_vBuffer );
+	gl.vertexAttribPointer(earth_vPosition, 4, gl.FLOAT, false, 0, 0);
+    
+	for( var i=0; i<3*earth_normalsArray.length; i+=3) 
+        gl.drawArrays(gl.TRIANGLES, i, 3 );
+}
+
+function drawMoon(){
+	gl.bindBuffer(gl.ARRAY_BUFFER, moon_nBuffer);
+	gl.vertexAttribPointer(moon_vNormal, 4, gl.FLOAT, false, 0, 0 );
+	gl.bindBuffer(gl.ARRAY_BUFFER, moon_vBuffer );
+	gl.vertexAttribPointer(moon_vPosition, 4, gl.FLOAT, false, 0, 0);
+    
+	for( var i=0; i<3*moon_normalsArray.length; i+=3) 
+        gl.drawArrays(gl.TRIANGLES, i, 3 );
 }

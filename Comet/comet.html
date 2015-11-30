@@ -11,29 +11,24 @@ uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform vec4 lightPosition;
 
-void main()
-{
+void main(){
     vec3 pos = -(modelViewMatrix * vPosition).xyz;
     vec3 light = lightPosition.xyz;
     L = normalize( light - pos );
     E =  pos;
     N = normalize( (modelViewMatrix*vNormal).xyz);
     gl_Position = projectionMatrix * modelViewMatrix * vPosition;
-    
 }
-
 </script>
 <script id="fragment-shader" type="x-shader/x-fragment">
 precision mediump float;
-
 uniform vec4 ambientProduct;
 uniform vec4 diffuseProduct;
 uniform vec4 specularProduct;
 uniform float shininess;
 varying vec3 N, L, E;
 
-void main()
-{    
+void main(){    
     vec4 fColor;
     
     vec3 H = normalize( L + E );
@@ -52,7 +47,6 @@ void main()
 
     gl_FragColor = fColor;
 }
-
 </script>
 <script type="text/javascript" src="webgl-utils.js"></script>
 <script type="text/javascript" src="initShaders.js"></script>
