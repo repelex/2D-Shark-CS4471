@@ -22,7 +22,7 @@ var canvas;
 var gl;
 var program;
 
-var numTimesToSubdivide = 5;
+var numTimesToSubdivide = 4;
 
 var earth_pointsArray = [];
 var earth_normalsArray = [];
@@ -35,6 +35,8 @@ var radius = 1.5;
 var theta  = 0.0;
 var phi    = 0.0;
 var dr = 5.0 * Math.PI/180.0;
+
+var earthDeg = 0;
 
 var left = -5.0;
 var right = 5.0;
@@ -142,15 +144,13 @@ function render(){
 	eye = vec3(-1,.25,0);
 	theta +=1;
 
-    materialAmbient = vec4( 0, 0, 0.1, 1.0 );
-    materialDiffuse = vec4( 0, 0, 1.0, 1.0 );
-    materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
-    initLights();
-
-    modelViewMatrix = lookAt(eye, at , up);
     
     projectionMatrix = ortho(left, right, bottom, ytop, near, far);
-            
+
+    modelViewMatrix = lookAt(eye, at , up);
+    modelViewMatrix = mult(modelViewMatrix, rotate(earthDeg, [0,1,0]));
+    earthDeg += 2;
+   
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix) );
     
@@ -242,13 +242,18 @@ function initLights(){
 }
 
 function drawEarth(){
+    materialAmbient = vec4( 0, 0, 0.1, 1.0 );
+    materialDiffuse = vec4( 0, 0, 1.0, 1.0 );
+    materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
+    initLights();
+
 	gl.bindBuffer(gl.ARRAY_BUFFER, earth_nBuffer);
 	gl.vertexAttribPointer(earth_vNormal, 4, gl.FLOAT, false, 0, 0 );
 	gl.bindBuffer(gl.ARRAY_BUFFER, earth_vBuffer );
 	gl.vertexAttribPointer(earth_vPosition, 4, gl.FLOAT, false, 0, 0);
     
 	for( var i=0; i<3*earth_normalsArray.length; i+=3) 
-        gl.drawArrays(gl.TRIANGLES, i, 3 );
+        gl.drawArrays(gl.LINE_LOOP, i, 3 );
 }
 
 function drawMoon(){
