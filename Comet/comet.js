@@ -46,14 +46,14 @@ var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var lightSpecular = vec4( 0.1, 0.1, 0.1, 1.0 );
 
-var materialAmbient = vec4( 0.1, 0.1, 0.1, 1.0 );
-var materialDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
-var materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
-var materialShininess = 1000.0;
+var materialAmbient;
+var materialDiffuse;
+var materialSpecular;
+var materialShininess;
 
 var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
-var eye;
+var eye = vec3(-1.0, 0.25, 0.0);
 var at = vec3(0.0, 0.0, 0.0);
 var up = vec3(0.0, 1.0, 0.0);
 
@@ -117,7 +117,6 @@ window.onload = function init(){
     if ( !gl ) { alert( "WebGL isn't available" ); }
 
     gl.viewport( 0, 0, canvas.width, canvas.height );
-    //gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
     gl.enable(gl.DEPTH_TEST);
 
@@ -127,7 +126,6 @@ window.onload = function init(){
 	
 	initObjects();
     initBuffers();
-	initLights();
     
     modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
     projectionMatrixLoc = gl.getUniformLocation( program, "projectionMatrix" );
@@ -139,29 +137,22 @@ function render(){
     
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
-	eye = vec3(-1,.25,0);
-	theta +=1;
-
-    materialAmbient = vec4( 0, 0, 0.1, 1.0 );
-    materialDiffuse = vec4( 0, 0, 1.0, 1.0 );
-    materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
-    initLights();
-
-    modelViewMatrix = lookAt(eye, at , up);
-    
+	modelViewMatrix = lookAt(eye, at , up);
     projectionMatrix = ortho(left, right, bottom, ytop, near, far);
             
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix) );
     
 	drawEarth();
-
+	
+	theta +=1;
     modelViewMatrix = lookAt(eye, at , up);    
     modelViewMatrix = mult(modelViewMatrix, rotate(theta, [0,1,0]));
     modelViewMatrix = mult(modelViewMatrix, translate(0,0,3));
-
     modelViewMatrix = mult(modelViewMatrix, scale2(0.5,0.5,0.5));
-    gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+    
+	gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+	
 	drawMoon();
 	
     window.requestAnimFrame(render);
@@ -177,15 +168,12 @@ function initObjects(){
     tetrahedron(va, vb, vc, vd, numTimesToSubdivide, earth_normalsArray, earth_pointsArray);
 
 	//moon
-	
     var v1 = vec4(0.0, 0.0, -1.0,1);
 	var v2 = vec4(0.0, 0.942809, 0.333333, 1);
 	var v3 = vec4(-0.816497, -0.471405, 0.333333, 1);
 	var v4 = vec4(0.816497, -0.471405, 0.333333,1);
-    
 	
 	tetrahedron(v1, v2, v3, v4, numTimesToSubdivide, moon_normalsArray, moon_pointsArray);
-    
 }
 
 function initBuffers(){
@@ -224,7 +212,7 @@ function initBuffers(){
     gl.enableVertexAttribArray(moon_vPosition);
 }
 
-function initLights(){
+function updateLights(){
 	ambientProduct = mult(lightAmbient, materialAmbient);
     diffuseProduct = mult(lightDiffuse, materialDiffuse);
     specularProduct = mult(lightSpecular, materialSpecular);
@@ -242,6 +230,12 @@ function initLights(){
 }
 
 function drawEarth(){
+	materialAmbient = vec4( 0, 0, 0.1, 1.0 );
+    materialDiffuse = vec4( 0, 0, 1.0, 1.0 );
+    materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
+	materialShininess = 100;
+	updateLights();
+	
 	gl.bindBuffer(gl.ARRAY_BUFFER, earth_nBuffer);
 	gl.vertexAttribPointer(earth_vNormal, 4, gl.FLOAT, false, 0, 0 );
 	gl.bindBuffer(gl.ARRAY_BUFFER, earth_vBuffer );
@@ -255,7 +249,8 @@ function drawMoon(){
     materialAmbient = vec4( 0.1, 0.1, 0.1, 1.0 );
     materialDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
     materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
-    initLights();
+	materialShininess = 100;
+    updateLights();
     
 	gl.bindBuffer(gl.ARRAY_BUFFER, moon_nBuffer);
 	gl.vertexAttribPointer(moon_vNormal, 4, gl.FLOAT, false, 0, 0 );
@@ -266,7 +261,18 @@ function drawMoon(){
         gl.drawArrays(gl.TRIANGLES, i, 3 );
 }
 
+//modified scale 
+function scale2(x, y, z){
+	if ( Array.isArray(x) && x.length == 3 ) {
+		z = x[2];
+        y = x[1];
+        x = x[0];
+    }
 
-function rand() {
-  return Math.random();
+    var result = mat4();
+    result[0][0] = x;
+    result[1][1] = y;
+    result[2][2] = z;
+
+    return result;
 }
