@@ -1,4 +1,4 @@
-/* 
+/* /* 
 1. 	The planet is centered at the origin
 2. 	The planet is rotating (So some surface detail is needed)
 3. 	A moon is orbiting around the planet
@@ -241,7 +241,6 @@ function drawEarth(){
 	materialShininess = 100;
 	updateLights();
 	
-
 	gl.bindBuffer(gl.ARRAY_BUFFER, earth_nBuffer);
 	gl.vertexAttribPointer(earth_vNormal, 4, gl.FLOAT, false, 0, 0 );
 	gl.bindBuffer(gl.ARRAY_BUFFER, earth_vBuffer );
