@@ -367,7 +367,7 @@ function rotate( angle, axis )
 
 //----------------------------------------------------------------------------
 
-function scale2( x, y, z )
+function scale( x, y, z )
 {
     if ( Array.isArray(x) && x.length == 3 ) {
         z = x[2];
@@ -496,8 +496,6 @@ function transpose( m )
 //
 //  Vector Functions
 //
-
-
 
 function dot( u, v )
 {
