@@ -241,7 +241,6 @@ function drawEarth(){
 	materialShininess = 100;
 	updateLights();
 	
-
 	gl.bindBuffer(gl.ARRAY_BUFFER, earth_nBuffer);
 	gl.vertexAttribPointer(earth_vNormal, 4, gl.FLOAT, false, 0, 0 );
 	gl.bindBuffer(gl.ARRAY_BUFFER, earth_vBuffer );
