@@ -26,6 +26,8 @@ var numTimesToSubdivide = 4;
 
 var earth_pointsArray = [];
 var earth_normalsArray = [];
+var earthgrid_pointsArray = [];
+var earthgrid_normalsArray = [];
 var moon_pointsArray = [];
 var moon_normalsArray = [];
 
@@ -63,6 +65,10 @@ var earth_nBuffer;
 var earth_vNormal;
 var earth_vBuffer;
 var earth_vPosition;
+var earthgrid_nBuffer;
+var earthgrid_vNormal;
+var earthgrid_vBuffer;
+var earthgrid_vPosition;
 var moon_nBuffer;
 var moon_vNormal;
 var moon_vBuffer;
@@ -148,13 +154,16 @@ function render(){
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix) );
 	drawEarth();
+	modelViewMatrix = mult(modelViewMatrix, scale2(1.01,1.01,1.01));
+	gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+	drawEarthGrid();
 	
     //moon transformations
 	theta +=1;
     modelViewMatrix = lookAt(eye, at , up);    
     modelViewMatrix = mult(modelViewMatrix, rotate(theta, [0,1,0]));
     modelViewMatrix = mult(modelViewMatrix, translate(0,0,3));
-    modelViewMatrix = mult(modelViewMatrix, scale2(0.5,0.5,0.5));
+    modelViewMatrix = mult(modelViewMatrix, scale2(0.4,0.4,0.4));
     
 	gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
 	
@@ -171,6 +180,14 @@ function initObjects(){
 	var vd = vec4(0.816497, -0.471405, 0.333333,1);
 	
     tetrahedron(va, vb, vc, vd, numTimesToSubdivide, earth_normalsArray, earth_pointsArray);
+	
+	//earth grid
+	var va1 = vec4(0.0, 0.0, -1.0,1);
+	var vb1 = vec4(0.0, 0.942809, 0.333333, 1);
+	var vc1 = vec4(-0.816497, -0.471405, 0.333333, 1);
+	var vd1 = vec4(0.816497, -0.471405, 0.333333,1);
+	
+    tetrahedron(va1, vb1, vc1, vd1, numTimesToSubdivide, earthgrid_normalsArray, earthgrid_pointsArray);
 
 	//moon
     var v1 = vec4(0.0, 0.0, -1.0,1);
@@ -198,6 +215,23 @@ function initBuffers(){
     earth_vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(earth_vPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(earth_vPosition);
+	
+	//earth center
+	earthgrid_nBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, earthgrid_nBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(earthgrid_normalsArray), gl.STATIC_DRAW );
+    
+    earthgrid_vNormal = gl.getAttribLocation(program, "vNormal" );
+    gl.vertexAttribPointer(earthgrid_vNormal, 4, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray(earthgrid_vNormal);
+
+    earthgrid_vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, earthgrid_vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(earthgrid_pointsArray), gl.STATIC_DRAW);
+    
+    earthgrid_vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(earthgrid_vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(earthgrid_vPosition);
 	
 	//moon
 	moon_nBuffer = gl.createBuffer();
@@ -235,8 +269,8 @@ function updateLights(){
 }
 
 function drawEarth(){
-	materialAmbient = vec4( 0, 0, 0.1, 1.0 );
-    materialDiffuse = vec4( 0, 0, 1.0, 1.0 );
+	materialAmbient = vec4( 0.0, 0.0, 0.1, 1.0 );
+    materialDiffuse = vec4( 0.0, 0.0, 1.0, 1.0 );
     materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
 	materialShininess = 100;
 	updateLights();
@@ -247,6 +281,22 @@ function drawEarth(){
 	gl.vertexAttribPointer(earth_vPosition, 4, gl.FLOAT, false, 0, 0);
     
 	for( var i=0; i<earth_normalsArray.length; i+=3) 
+        gl.drawArrays(gl.TRIANGLES, i, 3 );
+}
+
+function drawEarthGrid(){
+	materialAmbient = vec4( 0.0, 1.0, 0.0, 1.0 );
+    materialDiffuse = vec4( 0.0, 0.1, 0.0, 1.0 );
+    materialSpecular = vec4( 0.0, 1.0, 0.0, 0.0 );
+	materialShininess = 100;
+	updateLights();
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, earthgrid_nBuffer);
+	gl.vertexAttribPointer(earthgrid_vNormal, 4, gl.FLOAT, false, 0, 0 );
+	gl.bindBuffer(gl.ARRAY_BUFFER, earthgrid_vBuffer );
+	gl.vertexAttribPointer(earthgrid_vPosition, 4, gl.FLOAT, false, 0, 0);
+    
+	for( var i=0; i<earthgrid_normalsArray.length; i+=3) 
         gl.drawArrays(gl.LINE_LOOP, i, 3 );
 }
 
