@@ -14,10 +14,6 @@
 7.	Include lighting where the light comes from the sun 
 */
 
-//useful rotating demo: http://learningwebgl.com/lessons/lesson13/index.html
-//maps for earth and moon: http://maps.jpl.nasa.gov/
-//useful particles demo: http://jeshua.me/content/demos/webglTutorial01/particleDemoLive.html
-
 var canvas;
 var gl;
 var program;
@@ -135,6 +131,9 @@ window.onload = function init(){
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
     gl.enable(gl.DEPTH_TEST);
+	
+	//event handler
+	document.onkeyup = handleKeyUp;
 
     //load shaders and initialize attribute buffers
     program = initShaders( gl, "vertex-shader", "fragment-shader" );
@@ -365,6 +364,12 @@ function drawComet(){
         gl.drawArrays(gl.TRIANGLES, i, 3 );
 }
 
+function handleKeyUp(event){
+	if (event.keyCode == 13) {
+        // reload game
+        location.reload();
+    }
+}
 //modified scale 
 function scale2(x, y, z){
 	if ( Array.isArray(x) && x.length == 3 ) {
