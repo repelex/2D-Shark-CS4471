@@ -30,6 +30,8 @@ var earthgrid_pointsArray = [];
 var earthgrid_normalsArray = [];
 var moon_pointsArray = [];
 var moon_normalsArray = [];
+var comet_pointsArray = [];
+var comet_normalsArray = [];
 
 var near = -100;
 var far = 100;
@@ -39,6 +41,8 @@ var phi    = 0.0;
 var dr = 5.0 * Math.PI/180.0;
 
 var earthDeg = 0;
+var impact = 5;
+var ctheta = 0;
 
 var left = -5.0;
 var right = 5.0;
@@ -73,6 +77,10 @@ var moon_nBuffer;
 var moon_vNormal;
 var moon_vBuffer;
 var moon_vPosition;
+var comet_nBuffer;
+var comet_vNormal;
+var comet_vBuffer;
+var comet_vPosition;
 
 function triangle(a, b, c, nA, pA){
 	n1=vec4(a)
@@ -164,38 +172,46 @@ function render(){
     modelViewMatrix = mult(modelViewMatrix, rotate(theta, [0,1,0]));
     modelViewMatrix = mult(modelViewMatrix, translate(0,0,3));
     modelViewMatrix = mult(modelViewMatrix, scale2(0.4,0.4,0.4));
-    
 	gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
 	
 	drawMoon();
+	
+	//comet transformations
+	if (impact < 0.8){
+		ctheta +=2;
+	} else {
+		impact -=0.01;
+	}
+	
+	modelViewMatrix = lookAt(eye, at , up);
+	modelViewMatrix = mult(modelViewMatrix, rotate(ctheta, [0,1,0]));	
+    modelViewMatrix = mult(modelViewMatrix, translate(0,impact-0.5,impact));
+    modelViewMatrix = mult(modelViewMatrix, scale2(0.2,0.2,0.2));
+    gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+	
+	drawComet();
 	
     window.requestAnimFrame(render);
 }
 
 function initObjects(){
-	//earth
+	//sphere
 	var va = vec4(0.0, 0.0, -1.0,1);
 	var vb = vec4(0.0, 0.942809, 0.333333, 1);
 	var vc = vec4(-0.816497, -0.471405, 0.333333, 1);
 	var vd = vec4(0.816497, -0.471405, 0.333333,1);
 	
+	//earth
     tetrahedron(va, vb, vc, vd, numTimesToSubdivide, earth_normalsArray, earth_pointsArray);
 	
 	//earth grid
-	var va1 = vec4(0.0, 0.0, -1.0,1);
-	var vb1 = vec4(0.0, 0.942809, 0.333333, 1);
-	var vc1 = vec4(-0.816497, -0.471405, 0.333333, 1);
-	var vd1 = vec4(0.816497, -0.471405, 0.333333,1);
-	
-    tetrahedron(va1, vb1, vc1, vd1, numTimesToSubdivide, earthgrid_normalsArray, earthgrid_pointsArray);
+    tetrahedron(va, vb, vc, vd, numTimesToSubdivide, earthgrid_normalsArray, earthgrid_pointsArray);
 
 	//moon
-    var v1 = vec4(0.0, 0.0, -1.0,1);
-	var v2 = vec4(0.0, 0.942809, 0.333333, 1);
-	var v3 = vec4(-0.816497, -0.471405, 0.333333, 1);
-	var v4 = vec4(0.816497, -0.471405, 0.333333,1);
+	tetrahedron(va, vb, vc, vd, numTimesToSubdivide, moon_normalsArray, moon_pointsArray);
 	
-	tetrahedron(v1, v2, v3, v4, numTimesToSubdivide, moon_normalsArray, moon_pointsArray);
+	//comet
+	tetrahedron(va, vb, vc, vd, numTimesToSubdivide, comet_normalsArray, comet_pointsArray);
 }
 
 function initBuffers(){
@@ -249,6 +265,23 @@ function initBuffers(){
     moon_vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(moon_vPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(moon_vPosition);
+	
+	//comet
+	comet_nBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, comet_nBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(comet_normalsArray), gl.STATIC_DRAW );
+    
+    comet_vNormal = gl.getAttribLocation(program, "vNormal" );
+    gl.vertexAttribPointer(comet_vNormal, 4, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray(comet_vNormal);
+
+    comet_vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, comet_vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(comet_pointsArray), gl.STATIC_DRAW);
+    
+    comet_vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(comet_vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(comet_vPosition);
 }
 
 function updateLights(){
@@ -313,6 +346,22 @@ function drawMoon(){
 	gl.vertexAttribPointer(moon_vPosition, 4, gl.FLOAT, false, 0, 0);
     
 	for( var i=0; i<moon_normalsArray.length; i+=3) 
+        gl.drawArrays(gl.TRIANGLES, i, 3 );
+}
+
+function drawComet(){
+	materialAmbient = vec4( 0.0, 0.0, 0.1, 1.0 );
+    materialDiffuse = vec4( 0.5, 0.5, 1.0, 1.0 );
+    materialSpecular = vec4( 1.0, 0.0, 1.0, 1.0 );
+	materialShininess = 100;
+	updateLights();
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, comet_nBuffer);
+	gl.vertexAttribPointer(comet_vNormal, 4, gl.FLOAT, false, 0, 0 );
+	gl.bindBuffer(gl.ARRAY_BUFFER, comet_vBuffer );
+	gl.vertexAttribPointer(comet_vPosition, 4, gl.FLOAT, false, 0, 0);
+    
+	for( var i=0; i<comet_normalsArray.length; i+=3) 
         gl.drawArrays(gl.TRIANGLES, i, 3 );
 }
 
