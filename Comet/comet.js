@@ -274,7 +274,7 @@ function drawEarth(){
     materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
 	materialShininess = 100;
 	updateLights();
-	
+
 	gl.bindBuffer(gl.ARRAY_BUFFER, earth_nBuffer);
 	gl.vertexAttribPointer(earth_vNormal, 4, gl.FLOAT, false, 0, 0 );
 	gl.bindBuffer(gl.ARRAY_BUFFER, earth_vBuffer );
