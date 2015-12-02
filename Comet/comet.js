@@ -176,7 +176,7 @@ function render(){
 	drawMoon();
 	
 	//comet transformations
-	if (impact < 0.8){
+	if (impact < 0.7){
 		ctheta +=2;
 	} else {
 		impact -=0.01;
@@ -184,7 +184,7 @@ function render(){
 	
 	modelViewMatrix = lookAt(eye, at , up);
 	modelViewMatrix = mult(modelViewMatrix, rotate(ctheta, [0,1,0]));	
-    modelViewMatrix = mult(modelViewMatrix, translate(0,impact-0.5,impact));
+    modelViewMatrix = mult(modelViewMatrix, translate(-0.5,impact-0.5,impact));
     modelViewMatrix = mult(modelViewMatrix, scale2(0.2,0.2,0.2));
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
 	
