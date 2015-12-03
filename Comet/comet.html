@@ -12,6 +12,7 @@ uniform mat4 projectionMatrix;
 uniform vec4 lightPosition;
 
 void main(){
+    gl_PointSize = 3.0;
     vec3 pos = -(modelViewMatrix * vPosition).xyz;
     vec3 light = lightPosition.xyz;
     L = normalize( light - pos );
@@ -28,7 +29,8 @@ uniform vec4 specularProduct;
 uniform float shininess;
 varying vec3 N, L, E;
 
-void main(){    
+void main(){
+
     vec4 fColor;
     
     vec3 H = normalize( L + E );
