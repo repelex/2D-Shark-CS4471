@@ -78,6 +78,27 @@ var comet_vNormal;
 var comet_vBuffer;
 var comet_vPosition;
 
+var numTailParticles = 30;
+var tail_pointsArray = [];
+var tail_normalsArray = [];
+var tail_nBuffer;
+var tail_vNormal;
+var tail_vBuffer;
+var tail_vPosition;
+
+var tail_colourArray = [
+	vec4(1.0, 0.0, 0.0, 1.0),
+	vec4(1.0, 0.5, 0.0, 1.0),
+	vec4(1.0, 1.0, 0.0, 1.0)
+]
+
+function populateTail(){
+	for (var i = 0; i < numTailParticles; i++){
+		tail_pointsArray.push(vec3(i/100,i/100,i/100));
+		tail_normalsArray.push(vec3(i/100,i/100,i/100));
+	}
+}
+
 function triangle(a, b, c, nA, pA){
 	n1=vec4(a)
 	n2=vec4(b)
@@ -189,7 +210,22 @@ function render(){
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
 	
 	drawComet();
-	
+	gl.bindBuffer(gl.ARRAY_BUFFER, tail_nBuffer);
+	gl.vertexAttribPointer(tail_vNormal, 3, gl.FLOAT, false, 0, 0 );
+	gl.bindBuffer(gl.ARRAY_BUFFER, tail_vBuffer );
+	gl.vertexAttribPointer(tail_vPosition, 3, gl.FLOAT, false, 0, 0);
+	if (impact >0.7){
+		for (var i = 0; i<tail_normalsArray.length; i++){
+			materialAmbient = tail_colourArray[i%3];
+		    materialDiffuse = tail_colourArray[i%3];
+		    materialSpecular = tail_colourArray[i%3];
+			materialShininess = 100;
+			updateLights();
+			modelViewMatrix = mult(modelViewMatrix, translate(Math.random(),Math.random(),Math.random()));
+			gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+			gl.drawArrays(gl.GL_POINTS, i, i+1);
+		}
+	}
     window.requestAnimFrame(render);
 }
 
@@ -211,6 +247,7 @@ function initObjects(){
 	
 	//comet
 	tetrahedron(va, vb, vc, vd, numTimesToSubdivide, comet_normalsArray, comet_pointsArray);
+	populateTail();
 }
 
 function initBuffers(){
@@ -281,6 +318,23 @@ function initBuffers(){
     comet_vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(comet_vPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(comet_vPosition);
+
+    //tail
+    tail_nBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, tail_nBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(tail_normalsArray), gl.STATIC_DRAW );
+    
+    tail_vNormal = gl.getAttribLocation(program, "vNormal" );
+    gl.vertexAttribPointer(tail_vNormal, 4, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray(tail_vNormal);
+
+    tail_vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, tail_vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(tail_pointsArray), gl.STATIC_DRAW);
+    
+    tail_vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(tail_vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(tail_vPosition);
 }
 
 function updateLights(){
@@ -359,7 +413,6 @@ function drawComet(){
 	gl.vertexAttribPointer(comet_vNormal, 4, gl.FLOAT, false, 0, 0 );
 	gl.bindBuffer(gl.ARRAY_BUFFER, comet_vBuffer );
 	gl.vertexAttribPointer(comet_vPosition, 4, gl.FLOAT, false, 0, 0);
-    
 	for( var i=0; i<comet_normalsArray.length; i+=3) 
         gl.drawArrays(gl.TRIANGLES, i, 3 );
 }
