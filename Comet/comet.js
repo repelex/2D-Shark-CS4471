@@ -77,6 +77,8 @@ var comet_nBuffer;
 var comet_vNormal;
 var comet_vBuffer;
 var comet_vPosition;
+var comet_scale = 0.2;
+var explode = false;
 
 var numTailParticles = 30;
 var tail_pointsArray = [];
@@ -178,7 +180,7 @@ function render(){
     //earth transformations
     modelViewMatrix = lookAt(eye, at , up);
     modelViewMatrix = mult(modelViewMatrix, rotate(earthDeg, [0,1,0]));
-    earthDeg += 2;
+    earthDeg -= 2;
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix) );
 	drawEarth();
@@ -198,18 +200,25 @@ function render(){
 	
 	//comet transformations
 	if (impact < 0.7){
-		ctheta +=2;
+		ctheta -=2;
+		if (comet_scale > 0.7){
+			explode = true;
+		} else {
+			comet_scale +=0.01;
+		}
 	} else {
 		impact -=0.01;
 	}
 	
-	modelViewMatrix = lookAt(eye, at , up);
-	modelViewMatrix = mult(modelViewMatrix, rotate(ctheta, [0,1,0]));	
-    modelViewMatrix = mult(modelViewMatrix, translate(-0.5,impact-0.5,impact));
-    modelViewMatrix = mult(modelViewMatrix, scale2(0.2,0.2,0.2));
-    gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+	if (!explode){
+		modelViewMatrix = lookAt(eye, at , up);
+		modelViewMatrix = mult(modelViewMatrix, rotate(ctheta, [0,1,0]));	
+		modelViewMatrix = mult(modelViewMatrix, translate(-0.5,impact-0.5,impact));
+		modelViewMatrix = mult(modelViewMatrix, scale2(comet_scale,comet_scale,comet_scale));
+		gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+		drawComet();
+	}
 	
-	drawComet();
 	gl.bindBuffer(gl.ARRAY_BUFFER, tail_nBuffer);
 	gl.vertexAttribPointer(tail_vNormal, 3, gl.FLOAT, false, 0, 0 );
 	gl.bindBuffer(gl.ARRAY_BUFFER, tail_vBuffer );
@@ -403,10 +412,19 @@ function drawMoon(){
 }
 
 function drawComet(){
-	materialAmbient = vec4( 0.0, 0.0, 0.1, 1.0 );
-    materialDiffuse = vec4( 0.5, 0.5, 1.0, 1.0 );
-    materialSpecular = vec4( 1.0, 0.0, 1.0, 1.0 );
-	materialShininess = 100;
+	
+	if (comet_scale == 0.2){
+		materialAmbient = vec4( 0.0, 0.0, 0.1, 1.0 );
+		materialDiffuse = vec4( 0.5, 0.5, 1.0, 1.0 );
+		materialSpecular = vec4( 1.0, 0.0, 1.0, 1.0 );
+		materialShininess = 100;
+	} else {
+		materialAmbient = vec4( 1.0, 1.0, 0.1, 1.0 );
+		materialDiffuse = vec4( 1.0, 1.0, 0.1, 1.0 );
+		materialSpecular = vec4( 1.0, 0.0, 1.0, 1.0 );
+		materialShininess = 100;
+	}
+	
 	updateLights();
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, comet_nBuffer);
