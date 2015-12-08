@@ -1,19 +1,3 @@
-/* /* 
-1. 	The planet is centered at the origin
-2. 	The planet is rotating (So some surface detail is needed)
-3. 	A moon is orbiting around the planet
-4. 	The comet movement on its trajectory (use a line, ignoring
-	the finer physics of orbits and gravity) is animated as it 
-	approaches and impacts the planet.
-5. 	Some graphic depiction of the impact is presented (for 
-	example a sphere that
-	diminishes to zero radius or a particle system explosion. 
-	This feature must rotate with the planet.)
-6.	Use Particle system methods for comet tail (pointing away 
-	from the sun)
-7.	Include lighting where the light comes from the sun 
-*/
-
 var canvas;
 var gl;
 var program;
@@ -28,6 +12,8 @@ var moon_pointsArray = [];
 var moon_normalsArray = [];
 var comet_pointsArray = [];
 var comet_normalsArray = [];
+var tail_pointsArray = [];
+var tail_normalsArray = [];
 
 var near = -100;
 var far = 100;
@@ -45,7 +31,11 @@ var right = 5.0;
 var ytop = 5.0;
 var bottom = -5.0;
 
-var lightPosition = vec4(1.0, 1.0, 1.0, 0.0 );
+var comet_scale = 0.2;
+var explode = false;
+var numTailParticles = 30;
+
+var lightPosition = vec4(1.0, 0.0, 0.5, 0.0 );
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var lightSpecular = vec4( 0.1, 0.1, 0.1, 1.0 );
@@ -77,12 +67,6 @@ var comet_nBuffer;
 var comet_vNormal;
 var comet_vBuffer;
 var comet_vPosition;
-var comet_scale = 0.2;
-var explode = false;
-
-var numTailParticles = 30;
-var tail_pointsArray = [];
-var tail_normalsArray = [];
 var tail_nBuffer;
 var tail_vNormal;
 var tail_vBuffer;
@@ -195,7 +179,6 @@ function render(){
     modelViewMatrix = mult(modelViewMatrix, translate(0,0,3));
     modelViewMatrix = mult(modelViewMatrix, scale2(0.4,0.4,0.4));
 	gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
-	
 	drawMoon();
 	
 	//comet transformations
@@ -204,7 +187,7 @@ function render(){
 		if (comet_scale > 0.7){
 			explode = true;
 		} else {
-			comet_scale +=0.01;
+			comet_scale +=0.0025;
 		}
 	} else {
 		impact -=0.01;
@@ -219,6 +202,7 @@ function render(){
 		drawComet();
 	}
 	
+	//comet tail particles
 	gl.bindBuffer(gl.ARRAY_BUFFER, tail_nBuffer);
 	gl.vertexAttribPointer(tail_vNormal, 3, gl.FLOAT, false, 0, 0 );
 	gl.bindBuffer(gl.ARRAY_BUFFER, tail_vBuffer );
@@ -400,6 +384,7 @@ function drawMoon(){
     materialDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
     materialSpecular = vec4( 0.0, 0.0, 0.0, 1.0 );
 	materialShininess = 100;
+	lightPosition = vec4(1.0 + theta/10, 0.0, 0.5, 0.0 );
     updateLights();
     
 	gl.bindBuffer(gl.ARRAY_BUFFER, moon_nBuffer);
@@ -419,8 +404,8 @@ function drawComet(){
 		materialSpecular = vec4( 1.0, 0.0, 1.0, 1.0 );
 		materialShininess = 100;
 	} else {
-		materialAmbient = vec4( 1.0, 1.0, 0.1, 1.0 );
-		materialDiffuse = vec4( 1.0, 1.0, 0.1, 1.0 );
+		materialAmbient = vec4(1.0, 0.0, 0.0, 1.0);
+		materialDiffuse = vec4(1.0, 1.0, 0.0, 1.0);
 		materialSpecular = vec4( 1.0, 0.0, 1.0, 1.0 );
 		materialShininess = 100;
 	}
