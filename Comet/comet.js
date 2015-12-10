@@ -428,13 +428,12 @@ function drawComet(){
 }
 
 function handleKeyUp(event){
-	alert(tailDir);
 	if (event.keyCode == 13) {
         // reload game
         location.reload();
     }
 }
-//modified scale 
+
 function scale2(x, y, z){
 	if ( Array.isArray(x) && x.length == 3 ) {
 		z = x[2];
