@@ -35,7 +35,7 @@ var comet_scale = 0.2;
 var explode = false;
 var numTailParticles = 30;
 
-var lightPosition = vec4(1.0, 0.0, 0.5, 0.0 );
+var lightPosition = vec4(0.0, 0.0, 1.0, 1.0);
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var lightSpecular = vec4( 0.1, 0.1, 0.1, 1.0 );
@@ -72,6 +72,9 @@ var tail_vNormal;
 var tail_vBuffer;
 var tail_vPosition;
 
+var cometPos;
+var tailDir;
+
 var tail_colourArray = [
 	vec4(1.0, 0.0, 0.0, 1.0),
 	vec4(1.0, 0.5, 0.0, 1.0),
@@ -80,8 +83,8 @@ var tail_colourArray = [
 
 function populateTail(){
 	for (var i = 0; i < numTailParticles; i++){
-		tail_pointsArray.push(vec3(i/100,i/100,i/100));
-		tail_normalsArray.push(vec3(i/100,i/100,i/100));
+		tail_pointsArray.push(vec3(0,0,0));
+		tail_normalsArray.push(vec3(0,0,0));
 	}
 }
 
@@ -194,6 +197,10 @@ function render(){
 	}
 	
 	if (!explode){
+		cometPos = vec3(-0.5,impact-0.5,impact);
+		tailDir = subtract(cometPos, vec3(0,0,5));
+
+
 		modelViewMatrix = lookAt(eye, at , up);
 		modelViewMatrix = mult(modelViewMatrix, rotate(ctheta, [0,1,0]));	
 		modelViewMatrix = mult(modelViewMatrix, translate(-0.5,impact-0.5,impact));
@@ -214,7 +221,7 @@ function render(){
 		    materialSpecular = tail_colourArray[i%3];
 			materialShininess = 100;
 			updateLights();
-			modelViewMatrix = mult(modelViewMatrix, translate(Math.random(),Math.random(),Math.random()));
+			modelViewMatrix = mult(modelViewMatrix, translate(tailDir[0]*Math.random(),tailDir[1]*Math.random(),tailDir[2]*Math.random()));
 			gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
 			gl.drawArrays(gl.GL_POINTS, i, i+1);
 		}
@@ -421,6 +428,7 @@ function drawComet(){
 }
 
 function handleKeyUp(event){
+	alert(tailDir);
 	if (event.keyCode == 13) {
         // reload game
         location.reload();
